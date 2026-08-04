@@ -96,7 +96,8 @@
     "tag_crr": "Contrast ratio (rounded)",
     "tag_1_4_3": "1.4.3 Contrast (Minimum) result",
     "tag_1_4_6": "1.4.6 Contrast (Enhanced) result",
-    "tag_1_4_11": "1.4.11 Non-text Contrast result"
+    "tag_1_4_11": "1.4.11 Non-text Contrast result",
+    "default_template_name": "Short"
   },
   "style_chooser": {
     "title": "Choose a style",

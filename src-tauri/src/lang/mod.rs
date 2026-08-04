@@ -12,3 +12,4 @@
 
 pub mod en;
 pub mod fr;
+pub mod sk;

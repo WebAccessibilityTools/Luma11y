@@ -79,16 +79,12 @@ function loadShortcuts(): AppShortcut[] {
 
 const DEFAULT_SHORTCUT = navigator.platform.includes('Mac') ? 'Cmd+S' : 'Ctrl+S';
 
-const DEFAULT_TEMPLATES: CopyTemplate[] = [
-  { name: 'Short', template: '%f.hex% / %b.hex% = %cr%:1', shortcut: DEFAULT_SHORTCUT },
-];
-
 function loadTemplates(): CopyTemplate[] {
   try {
     const raw = localStorage.getItem('luma11y-copy-templates');
     if (raw) return JSON.parse(raw);
   } catch {}
-  return structuredClone(DEFAULT_TEMPLATES);
+  return [{ name: i18nT('settings.default_template_name'), template: '%f.hex% / %b.hex% = %cr%:1', shortcut: DEFAULT_SHORTCUT }];
 }
 
 function keyboardEventToShortcut(event: KeyboardEvent): string {
@@ -100,6 +96,14 @@ function keyboardEventToShortcut(event: KeyboardEvent): string {
   parts.push(event.key.length === 1 ? event.key.toUpperCase() : event.key);
   return parts.join('+');
 }
+
+// Résout la locale depuis localStorage avant de construire le store, pour que
+// les valeurs par défaut générées ci-dessous (ex. nom du modèle par défaut)
+// soient déjà dans la bonne langue.
+// Resolve the locale from localStorage before building the store, so default
+// values generated below (e.g. default template name) are already in the
+// right language.
+initLocale();
 
 Alpine.store('settings', {
   // Préférence actuelle / Current preference

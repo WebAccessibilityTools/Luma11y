@@ -96,7 +96,8 @@
     "tag_crr": "Ratio de contraste (arrondi)",
     "tag_1_4_3": "Résultat 1.4.3 Contraste (Minimum)",
     "tag_1_4_6": "Résultat 1.4.6 Contraste (Amélioré)",
-    "tag_1_4_11": "Résultat 1.4.11 Contraste des éléments non textuels"
+    "tag_1_4_11": "Résultat 1.4.11 Contraste des éléments non textuels",
+    "default_template_name": "Court"
   },
   "style_chooser": {
     "title": "Choisir un style",
