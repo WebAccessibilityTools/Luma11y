@@ -18,6 +18,7 @@ pub fn menu_t(locale: &str, key: &str) -> &'static str {
     let lookup = match locale {
         "en" => lang::en::t(key),
         "fr" => lang::fr::t(key),
+        "sk" => lang::sk::t(key),
         // Locale inconnue : fallback direct vers l'anglais
         // Unknown locale: fall back straight to English
         _ => lang::en::t(key),

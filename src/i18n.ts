@@ -5,18 +5,19 @@
 
 import en from './locales/en.json';
 import fr from './locales/fr.json';
+import sk from './locales/sk.json';
 
 // Traductions disponibles / Available translations
-const translations: Record<string, Record<string, unknown>> = { en, fr };
+const translations: Record<string, Record<string, unknown>> = { en, fr, sk };
 
 // Langues supportées / Supported languages
-const SUPPORTED_LOCALES = ['en', 'fr'];
+const SUPPORTED_LOCALES = ['en', 'fr', 'sk'];
 const DEFAULT_LOCALE = 'en';
 const STORAGE_KEY = 'luma11y-locale';
 const PREFERENCE_KEY = 'luma11y-locale-preference';
 
 // Type de préférence / Preference type
-export type LocalePreference = 'auto' | 'en' | 'fr';
+export type LocalePreference = 'auto' | 'en' | 'fr' | 'sk';
 
 // Locale courante / Current locale
 let currentLocale = DEFAULT_LOCALE;
@@ -74,11 +75,11 @@ export function getLocale(): string {
   return currentLocale;
 }
 
-/// Retourne la préférence de locale stockée ('auto', 'en', ou 'fr')
-/// Returns the stored locale preference ('auto', 'en', or 'fr')
+/// Retourne la préférence de locale stockée ('auto', 'en', 'fr', ou 'sk')
+/// Returns the stored locale preference ('auto', 'en', 'fr', or 'sk')
 export function getLocalePreference(): LocalePreference {
   const stored = localStorage.getItem(PREFERENCE_KEY);
-  if (stored === 'auto' || stored === 'en' || stored === 'fr') {
+  if (stored === 'auto' || stored === 'en' || stored === 'fr' || stored === 'sk') {
     return stored;
   }
   // Si pas de préférence mais une locale explicite stockée, c'est un choix explicite
@@ -93,7 +94,7 @@ export function getLocalePreference(): LocalePreference {
 /// Applique une locale effective sans persister (preview)
 /// Applies an effective locale without persisting (preview)
 ///
-/// @param pref - 'auto', 'en', ou 'fr'
+/// @param pref - 'auto', 'en', 'fr', ou 'sk'
 /// @param systemLocale - locale système (nécessaire si pref === 'auto')
 export function previewLocalePreference(pref: LocalePreference, systemLocale?: string): void {
   const effective = pref === 'auto'
@@ -111,7 +112,7 @@ export function previewLocalePreference(pref: LocalePreference, systemLocale?: s
 /// Change la préférence de locale et applique la locale effective
 /// Changes the locale preference and applies the effective locale
 ///
-/// @param pref - 'auto', 'en', ou 'fr'
+/// @param pref - 'auto', 'en', 'fr', ou 'sk'
 /// @param systemLocale - locale système (nécessaire si pref === 'auto')
 export function setLocalePreference(pref: LocalePreference, systemLocale?: string): void {
   localStorage.setItem(PREFERENCE_KEY, pref);
@@ -179,4 +180,25 @@ export function initLocale(systemLocale?: string): string {
 /// Registers a callback called on each locale change
 export function onLocaleChange(callback: LocaleChangeCallback): void {
   callbacks.push(callback);
+}
+
+/// Indique si `name` correspond au nom par défaut du modèle de copie dans
+/// N'IMPORTE QUELLE locale (ex. "Short", "Court" ou "Krátky"). Sert à migrer
+/// les modèles sauvegardés avant qu'une traduction n'existe pour la locale
+/// courante, sans jamais toucher aux modèles réellement renommés par l'utilisateur.
+/// Returns whether `name` matches the default copy-template name in ANY
+/// locale (e.g. "Short", "Court" or "Krátky"). Used to migrate templates that
+/// were saved before a translation existed for the current locale, without
+/// ever touching templates the user actually renamed themselves.
+// Anciennes valeurs par défaut ayant existé pendant le développement, pour
+// que la migration fonctionne même si une traduction a depuis été retirée.
+// Past default values that existed during development, so migration still
+// works even after a translation has since been removed.
+const LEGACY_DEFAULT_TEMPLATE_NAMES = ['Short', 'Court', 'Krátky', 'Krátky formát'];
+
+export function isDefaultTemplateName(name: string): boolean {
+  if (LEGACY_DEFAULT_TEMPLATE_NAMES.includes(name)) return true;
+  return Object.values(translations).some(
+    (loc) => resolve(loc, 'settings.default_template_name') === name
+  );
 }

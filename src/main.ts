@@ -25,7 +25,7 @@ import { UIStore, BackendStore } from './store';
 
 // Import du module i18n
 // Import i18n module
-import { initLocale, onLocaleChange, setLocale, t as i18nT } from './i18n';
+import { initLocale, onLocaleChange, setLocale, t as i18nT, isDefaultTemplateName } from './i18n';
 
 // Import de la détection de locale système via Tauri plugin OS
 // Import system locale detection via Tauri plugin OS
@@ -178,10 +178,22 @@ interface AppShortcut {
 function loadCopyTemplates(): CopyTemplate[] {
   try {
     const raw = localStorage.getItem('luma11y-copy-templates');
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw) as CopyTemplate[];
+      // Migre le nom du modèle par défaut sauvegardé avant que sa traduction
+      // n'existe pour la locale courante (jamais les modèles renommés par l'utilisateur).
+      // Migrate a default template name saved before its translation existed
+      // for the current locale (never templates the user actually renamed).
+      for (const tpl of parsed) {
+        if (tpl.template === '%f.hex% / %b.hex% = %cr%:1' && isDefaultTemplateName(tpl.name)) {
+          tpl.name = i18nT('settings.default_template_name');
+        }
+      }
+      return parsed;
+    }
   } catch {}
   const defaultShortcut = navigator.platform.includes('Mac') ? 'Cmd+S' : 'Ctrl+S';
-  return [{ name: 'Short', template: '%f.hex% / %b.hex% = %cr%:1', shortcut: defaultShortcut }];
+  return [{ name: i18nT('settings.default_template_name'), template: '%f.hex% / %b.hex% = %cr%:1', shortcut: defaultShortcut }];
 }
 
 // Load all shortcuts
