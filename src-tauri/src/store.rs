@@ -9,6 +9,7 @@ use crate::config;
 use crate::picker;
 use crate::color;
 use crate::color_names;
+use crate::wcag_contrast;
 
 // =============================================================================
 // STORE - État global partagé
@@ -120,7 +121,7 @@ impl Default for ResultStore {
         let (fr, fg, fb) = config::DEFAULT_FOREGROUND_RGB;
         let (br, bg, bb) = config::DEFAULT_BACKGROUND_RGB;
         let contrast_ratio_raw = color::contrast_ratio((fr, fg, fb), (br, bg, bb));
-        let contrast_ratio_rounded = color::floor_ratio(contrast_ratio_raw);
+        let contrast_ratio_rounded = wcag_contrast::truncate_ratio(contrast_ratio_raw);
         let background_contrast_with_white = color::contrast_ratio((br, bg, bb), (255, 255, 255));
         let background_contrast_with_black = color::contrast_ratio((br, bg, bb), (0, 0, 0));
         Self {
@@ -293,8 +294,7 @@ pub(crate) fn apply_color(store: &mut ResultStore, key: &str, rgb: (u8, u8, u8),
     // Opaque hex of the flattened foregroundÒ
     store.foreground_composited_hex = color::rgb_to_hex_string(blended_fg, 1.0);
     store.contrast_ratio_raw = color::contrast_ratio(blended_fg, store.background_rgb);
-    store.contrast_ratio_rounded = color::floor_ratio(store.contrast_ratio_raw);
-
+    store.contrast_ratio_rounded = wcag_contrast::truncate_ratio(store.contrast_ratio_raw);
     // Recalcule les contrastes arrière-plan vs blanc / noir
     // Recalculate background-vs-white / black contrasts
     store.background_contrast_with_white = color::contrast_ratio(store.background_rgb, (255, 255, 255));

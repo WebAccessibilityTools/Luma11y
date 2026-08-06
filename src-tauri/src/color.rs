@@ -3,10 +3,9 @@
 // =============================================================================
 
 use palette::{FromColor, Hsl, Hsv, Lab, Oklch, Srgb};
-use palette::color_difference::Wcag21RelativeContrast;
 use crate::store::ResultStore;
 use crate::picker::common::ColorPickerResult;
-use crate::config;
+use crate::wcag_contrast;
 
 /// Convertit un tuple RGB u8 en `Srgb<f64>` (composantes [0..1]).
 /// Convert a u8 RGB tuple into `Srgb<f64>` (components in [0..1]).
@@ -15,10 +14,13 @@ fn srgb_from_u8(rgb: (u8, u8, u8)) -> Srgb<f64> {
     Srgb::<u8>::new(r, g, b).into_format::<f64>()
 }
 
-/// Ratio de contraste WCAG entre deux couleurs sRGB.
-/// WCAG contrast ratio between two sRGB colors.
+/// Ratio de contraste WCAG entre deux couleurs sRGB opaques. Délègue au module
+/// `wcag_contrast`
+///
+/// WCAG contrast ratio between two opaque sRGB colors. Delegates to the
+/// `wcag_contrast` module
 pub fn contrast_ratio(fg: (u8, u8, u8), bg: (u8, u8, u8)) -> f64 {
-    srgb_from_u8(fg).relative_contrast(srgb_from_u8(bg))
+    wcag_contrast::contrast_ratio_u8(fg, bg)
 }
 
 /// Compose un premier-plan semi-transparent (alpha) sur un background opaque
@@ -200,12 +202,6 @@ pub fn hex_to_rgb(hex: &str) -> Option<((u8, u8, u8), f64)> {
 /// A color is considered dark when its contrast against black is < 4.5
 pub fn is_dark(rgb: (u8, u8, u8)) -> bool {
     contrast_ratio(rgb, (0, 0, 0)) < 4.5
-}
-
-/// Arrondi WCAG vers le bas, à la précision de `config::ROUNDING_FACTOR`.
-/// WCAG floor-rounding at `config::ROUNDING_FACTOR` precision.
-pub fn floor_ratio(raw: f64) -> f64 {
-    (raw * config::ROUNDING_FACTOR as f64).floor() / config::ROUNDING_FACTOR as f64
 }
 
 /// Met à jour les résultats du store à partir du résultat du picker

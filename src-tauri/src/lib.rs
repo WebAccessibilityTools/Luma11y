@@ -30,6 +30,10 @@ mod store;
 /// Color manipulation functions
 mod color;
 
+/// Ratio de contraste WCAG 2.2
+/// WCAG 2.2 contrast ratio
+mod wcag_contrast;
+
 /// Noms de couleurs CSS (W3C CSS Color Module Level 4)
 /// CSS named colors (W3C CSS Color Module Level 4)
 mod color_names;
