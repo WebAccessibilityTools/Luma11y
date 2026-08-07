@@ -109,10 +109,10 @@
          <div class="wrapper"
             x-bind:style="`background-color: ${showFgControls ? 'transparent' : $store.uiStore.foregroundHex}`">
             <section id="background"
-              x-bind:style="`background-color: ${$store.uiStore.backgroundHex}`">
+              x-bind:style="`background-color: ${$store.uiStore.backgroundHex}`"
+              x-bind:class="$store.uiStore.backgroundIsDark ? 'isDark' : 'isLight'">
               <div
                 class="color-preview"
-                x-bind:class="$store.uiStore.backgroundIsDark ? 'isDark' : 'isLight'"
               >
                 <h2 id="background-title" x-text="$store.uiStore.t('color.background')">Background</h2>
                 <div class="color-input">
