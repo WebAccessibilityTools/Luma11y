@@ -249,6 +249,45 @@ async function registerPickerShortcuts(): Promise<void> {
 }
 
 // =============================================================================
+// VÉRIFICATION DES PERMISSIONS (macOS : enregistrement de l'écran)
+// PERMISSION CHECK (macOS: screen recording)
+// =============================================================================
+
+// Vérifie au lancement que l'app peut capturer l'écran (nécessaire pour la
+// pipette).
+// Checks at launch that the app can capture the screen (required by the color
+// picker).
+async function checkScreenRecordingPermission(): Promise<void> {
+  if (!IS_MAC) return;
+
+  let granted = false;
+  try {
+    granted = await invoke<boolean>('check_screen_recording_permission');
+  } catch (err) {
+    console.error('Error checking screen recording permission:', err);
+    return;
+  }
+
+  // Autorisation déjà accordée : rien à faire.
+  // Permission already granted: nothing to do.
+  if (granted) return;
+
+  new WebviewWindow('permission', {
+    url: 'permission.html',
+    title: i18nT('permissions.screen_recording_title'),
+    width: 480,
+    height: 340,
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    center: true,
+    ...(IS_MAC
+      ? { titleBarStyle: 'overlay' as const, hiddenTitle: true }
+      : { decorations: false, transparent: true }),
+  });
+}
+
+// =============================================================================
 // CONFIGURATION DU STORE ALPINE.JS
 // ALPINE.JS STORE CONFIGURATION
 // =============================================================================
@@ -496,6 +535,10 @@ onThemeChange((theme) => {
       showCopyToast(text);
     }
   });
+
+  // Étape 5d : Vérifie la permission d'enregistrement d'écran (macOS)
+  // Step 5d: Check screen recording permission (macOS)
+  await checkScreenRecordingPermission();
 
   // Étape 6 : Récupère le profil ICC initial
   // Step 6: Get initial ICC profile

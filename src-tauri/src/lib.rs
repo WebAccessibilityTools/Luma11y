@@ -50,6 +50,10 @@ mod i18n;
 /// Per-language translation tables
 mod lang;
 
+/// Vérification des permissions système (capture d'écran macOS)
+/// System permission checks (macOS screen capture)
+mod permissions;
+
 // =============================================================================
 // INITIALISATION
 // INITIALIZATION
@@ -776,6 +780,9 @@ pub fn run() {
             set_copy_templates,
             set_always_on_top,
             open_settings_window,
+            permissions::check_screen_recording_permission,
+            permissions::request_screen_recording_permission,
+            permissions::open_screen_recording_settings,
         ])
         // Lance l'application Tauri
         // Run the Tauri application

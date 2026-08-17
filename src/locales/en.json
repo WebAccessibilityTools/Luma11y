@@ -110,5 +110,12 @@
     "always_on_top": "Always on top",
     "appearance": "Appearance",
     "appearance_auto": "Auto"
+  },
+  "permissions": {
+    "screen_recording_title": "Screen Recording permission required",
+    "screen_recording_message": "Luma11y needs the “Screen & System Audio Recording” permission to read the colour of pixels under your cursor. Without it, the colour picker cannot capture the screen.",
+    "screen_recording_instructions": "Open System Settings, enable Luma11y under “Screen & System Audio Recording”, then restart the app.",
+    "open_settings": "Open System Settings",
+    "close": "Continue anyway"
   }
 }

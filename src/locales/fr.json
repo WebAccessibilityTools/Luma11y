@@ -110,5 +110,12 @@
     "always_on_top": "Toujours au premier plan",
     "appearance": "Apparence",
     "appearance_auto": "Auto"
+  },
+  "permissions": {
+    "screen_recording_title": "Autorisation d'enregistrement de l'écran requise",
+    "screen_recording_message": "Luma11y a besoin de l'autorisation « Enregistrement de l'écran et de l'audio système » pour lire la couleur des pixels sous le curseur. Sans elle, la pipette ne peut pas capturer l'écran.",
+    "screen_recording_instructions": "Ouvrez Réglages Système, activez Luma11y sous « Enregistrement de l'écran et de l'audio système », puis relancez l'application.",
+    "open_settings": "Ouvrir les Réglages Système",
+    "close": "Continuer quand même"
   }
 }
