@@ -19,22 +19,23 @@
     </header>
     <main x-data="{
       activeTab: 'general',
-      tabs: ['general', 'shortcuts', 'templates'],
+      tabs: ['general', 'shortcuts', 'templates', 'about'],
       focusTab(id) { this.$root.querySelector(`[role=tab][data-tab=${id}]`)?.focus(); },
       prevTab() { const i = this.tabs.indexOf(this.activeTab); this.activeTab = this.tabs[(i - 1 + this.tabs.length) % this.tabs.length]; this.$nextTick(() => this.focusTab(this.activeTab)); },
       nextTab() { const i = this.tabs.indexOf(this.activeTab); this.activeTab = this.tabs[(i + 1) % this.tabs.length]; this.$nextTick(() => this.focusTab(this.activeTab)); }
-    }">
+    }"
+    @settings-navigate.window="if (tabs.includes($event.detail)) { activeTab = $event.detail; $nextTick(() => focusTab(activeTab)); }">
 
       <!-- Onglets / Tabs -->
-      <div class="tabs" role="tablist">
+      <div class="tabs" role="tablist" aria-orientation="vertical">
         <button role="tab" data-tab="general"
           id="tab-general" aria-controls="panel-general"
           :aria-selected="activeTab === 'general'"
           :tabindex="activeTab === 'general' ? 0 : -1"
           :class="{ active: activeTab === 'general' }"
           @click="activeTab = 'general'"
-          @keydown.arrow-left.prevent="prevTab()"
-          @keydown.arrow-right.prevent="nextTab()"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
           x-text="$store.settings.t('settings.tab_general')">General</button>
         <button role="tab" data-tab="shortcuts"
           id="tab-shortcuts" aria-controls="panel-shortcuts"
@@ -42,8 +43,8 @@
           :tabindex="activeTab === 'shortcuts' ? 0 : -1"
           :class="{ active: activeTab === 'shortcuts' }"
           @click="activeTab = 'shortcuts'"
-          @keydown.arrow-left.prevent="prevTab()"
-          @keydown.arrow-right.prevent="nextTab()"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
           x-text="$store.settings.t('settings.tab_shortcuts')">Shortcuts</button>
         <button role="tab" data-tab="templates"
           id="tab-templates" aria-controls="panel-templates"
@@ -51,10 +52,22 @@
           :tabindex="activeTab === 'templates' ? 0 : -1"
           :class="{ active: activeTab === 'templates' }"
           @click="activeTab = 'templates'"
-          @keydown.arrow-left.prevent="prevTab()"
-          @keydown.arrow-right.prevent="nextTab()"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
           x-text="$store.settings.t('settings.tab_templates')">Copy templates</button>
+        <button role="tab" data-tab="about"
+          id="tab-about" aria-controls="panel-about"
+          :aria-selected="activeTab === 'about'"
+          :tabindex="activeTab === 'about' ? 0 : -1"
+          :class="{ active: activeTab === 'about' }"
+          @click="activeTab = 'about'"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
+          x-text="$store.settings.t('settings.tab_about')">About</button>
       </div>
+
+      <!-- Contenu des onglets / Tab content -->
+      <div class="tab-content">
 
       <!-- Tab : Général / General -->
       <div role="tabpanel" id="panel-general" aria-labelledby="tab-general" x-show="activeTab === 'general'" class="tab-panel">
@@ -238,6 +251,58 @@
         </div>
         <button class="btn-add" @click="$store.settings.addTemplate()"><span aria-hidden="true">+</span> <span x-text="$store.settings.t('settings.add_template')">Add</span></button>
       </div>
+
+      <!-- Tab : À propos / About -->
+      <div role="tabpanel" id="panel-about" aria-labelledby="tab-about" x-show="activeTab === 'about'" class="tab-panel">
+        <div class="about">
+          <h1 class="about-name" x-text="$store.settings.appInfo.name">Luma11y</h1>
+          <p class="about-version" x-text="$store.settings.t('settings.about_version', $store.settings.appInfo.version)">Version</p>
+          <p class="about-description" x-text="$store.settings.t('settings.about_tagline')"></p>
+
+          <dl class="about-meta">
+            <dt x-text="$store.settings.t('settings.about_author')">Author</dt>
+            <dd x-text="$store.settings.appInfo.authors"></dd>
+            <dt x-text="$store.settings.t('settings.about_license')">License</dt>
+            <dd>GPL-3.0</dd>
+          </dl>
+
+          <div class="about-links">
+            <a class="about-link"
+              href="https://github.com/WebAccessibilityTools/Luma11y"
+              @click.prevent="$store.settings.openExternal('https://github.com/WebAccessibilityTools/Luma11y')">
+              <svg-icon name="github" size="1.1em"></svg-icon>
+              <span x-text="$store.settings.t('settings.about_repository')">View on GitHub</span>
+            </a>
+            <a class="about-link"
+              href="https://github.com/WebAccessibilityTools/Luma11y/issues/new"
+              @click.prevent="$store.settings.openExternal('https://github.com/WebAccessibilityTools/Luma11y/issues/new')">
+              <svg-icon name="bug" size="1.1em"></svg-icon>
+              <span x-text="$store.settings.t('settings.about_report_bug')">Report a bug</span>
+            </a>
+          </div>
+
+          <section class="about-support">
+            <h2 x-text="$store.settings.t('settings.about_support_title')">Support this project</h2>
+            <p x-text="$store.settings.t('settings.about_support')"></p>
+            <div class="about-links">
+              <a class="about-link"
+                href="https://github.com/sponsors/WebAccessibilityTools"
+                @click.prevent="$store.settings.openExternal('https://github.com/sponsors/WebAccessibilityTools')">
+                <svg-icon name="heart" size="1.1em"></svg-icon>
+                <span x-text="$store.settings.t('settings.about_sponsor')">Sponsor</span>
+              </a>
+              <a class="about-link"
+                href="https://www.buymeacoffee.com/ctrevisan"
+                @click.prevent="$store.settings.openExternal('https://www.buymeacoffee.com/ctrevisan')">
+                <svg-icon name="coffee" size="1.1em"></svg-icon>
+                <span x-text="$store.settings.t('settings.about_coffee')">Buy me a coffee</span>
+              </a>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      </div><!-- /.tab-content -->
     </main>
 
     <!-- Barre d'actions fixe / Fixed action bar -->

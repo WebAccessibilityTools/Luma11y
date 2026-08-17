@@ -181,6 +181,9 @@ pub struct AppState {
     pub appearance: Mutex<String>,
     pub style_theme: Mutex<String>,
     pub always_on_top: Mutex<bool>,
+    /// Onglet à activer à la prochaine ouverture de la fenêtre Settings.
+    /// Tab to activate on the next opening of the Settings window.
+    pub settings_tab: Mutex<String>,
 }
 
 // =============================================================================
