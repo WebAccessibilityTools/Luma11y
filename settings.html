@@ -125,6 +125,18 @@
           </div>
         </div>
 
+        <!-- Restaurer les couleurs au lancement / Restore colours on startup -->
+        <div class="section">
+          <label class="format-toggle">
+            <input type="checkbox"
+              :checked="$store.settings.restoreColors"
+              @change="$store.settings.restoreColors = $event.target.checked" 
+              aria-describedby="settings-restore-colors-help" />
+            <span x-text="$store.settings.t('settings.restore_colors')">Restore last colours on startup</span>
+          </label>
+          <p id="settings-restore-colors-help" class="field-suffix" x-text="$store.settings.t('settings.restore_colors_help')"></p>
+        </div>
+
         <!-- Formats de couleur / Color formats -->
         <fieldset class="section">
           <legend class="section-label" id="settings-formats-label" x-text="$store.settings.t('settings.color_formats')">Color formats</legend>

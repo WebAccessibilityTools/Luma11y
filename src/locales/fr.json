@@ -84,6 +84,8 @@
     "toast_duration": "Durée du toast",
     "toast_manual": "Fermeture manuelle",
     "toast_seconds": "Secondes",
+    "restore_colors": "Réafficher les dernières couleurs au lancement",
+    "restore_colors_help": "Rouvre l'application avec les couleurs de premier plan et d'arrière-plan de votre dernière session.",
     "color_formats": "Formats de couleur",
     "color_formats_help": "Choisissez les formats disponibles dans l'interface",
     "tab_shortcuts": "Raccourcis",

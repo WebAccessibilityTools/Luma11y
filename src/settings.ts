@@ -125,6 +125,10 @@ Alpine.store('settings', {
   // Durée du toast en secondes (0 = manuel) / Toast duration in seconds (0 = manual)
   toastDuration: parseInt(localStorage.getItem('luma11y-toast-duration') ?? '3', 10),
 
+  // Réaffiche la dernière combinaison de couleurs au lancement
+  // Restore the last colour combination on startup
+  restoreColors: localStorage.getItem('luma11y-restore-colors') === 'true',
+
   // Formats de couleur activables (hors hex) et ceux activés
   // Toggleable color formats (excluding hex) and the enabled ones
   selectableFormats: selectableFormats as string[],
@@ -206,6 +210,7 @@ Alpine.store('settings', {
     localStorage.setItem('luma11y-shortcuts', JSON.stringify((this as any).shortcuts));
     localStorage.setItem('luma11y-toast-duration', String((this as any).toastDuration));
     localStorage.setItem('luma11y-enabled-formats', JSON.stringify((this as any).enabledFormats));
+    localStorage.setItem('luma11y-restore-colors', String((this as any).restoreColors));
 
     // Persiste le thème, le style et la locale
     // Persist theme, style theme and locale

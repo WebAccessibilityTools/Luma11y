@@ -84,6 +84,8 @@
     "toast_duration": "Toast duration",
     "toast_manual": "Manual close",
     "toast_seconds": "Seconds",
+    "restore_colors": "Restore last colours on startup",
+    "restore_colors_help": "Reopen the app with the foreground and background colours from your last session.",
     "color_formats": "Colour formats",
     "color_formats_help": "Choose which formats are available in the interface",
     "tab_shortcuts": "Shortcuts",

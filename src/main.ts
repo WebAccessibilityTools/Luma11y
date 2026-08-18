@@ -334,6 +334,73 @@ onThemeChange((theme) => {
   (Alpine.store('uiStore') as UIStore).currentTheme = theme;
 });
 
+// =============================================================================
+// PERSISTANCE DE LA DERNIÈRE COMBINAISON DE COULEURS
+// LAST COLOUR COMBINATION PERSISTENCE
+// =============================================================================
+
+const RESTORE_COLORS_KEY = 'luma11y-restore-colors';
+const LAST_COLORS_KEY = 'luma11y-last-colors';
+
+interface LastColors {
+  fg: [number, number, number];
+  bg: [number, number, number];
+  fgAlpha: number;
+}
+
+// Vrai une fois l'init terminée : évite de persister l'état par défaut au
+// chargement (qui écraserait la dernière combinaison mémorisée).
+// True once init is done: avoids persisting the default state on load (which
+// would overwrite the remembered last combination).
+let persistColorsReady = false;
+
+// Separe la chaîne "r, g, b" en trois valeurs numérique
+// Split the "r, g, b" string into 3 numeric values
+function parseRgbTriplet(value: string): [number, number, number] | null {
+  const parts = value.split(',').map((v) => parseInt(v.trim(), 10));
+  if (parts.length === 3 && parts.every((n) => Number.isFinite(n))) {
+    return [parts[0], parts[1], parts[2]];
+  }
+  return null;
+}
+
+// Mémorise la combinaison de couleurs courante
+// Remembers the current colour combination
+function saveLastColors(): void {
+  const store = Alpine.store('uiStore') as UIStore;
+  const fg = parseRgbTriplet(store.foregroundRgb);
+  const bg = parseRgbTriplet(store.backgroundRgb);
+  if (!fg || !bg) return;
+  const data: LastColors = { fg, bg, fgAlpha: store.foregroundAlpha };
+  try {
+    localStorage.setItem(LAST_COLORS_KEY, JSON.stringify(data));
+  } catch (err) {
+    console.error('Error saving last colours:', err);
+  }
+}
+
+// Réapplique la dernière combinaison et recalcule tous les valeurs dérivés
+// Re-applies the last combination and recomputes all derived values
+async function restoreLastColors(): Promise<void> {
+  if (localStorage.getItem(RESTORE_COLORS_KEY) !== 'true') return;
+  let data: LastColors;
+  try {
+    const raw = localStorage.getItem(LAST_COLORS_KEY);
+    if (!raw) return;
+    data = JSON.parse(raw);
+  } catch (err) {
+    console.error('Error reading last colours:', err);
+    return;
+  }
+  if (!Array.isArray(data.fg) || !Array.isArray(data.bg)) return;
+  try {
+    await invoke('update_store_rgb', { key: 'background', r: data.bg[0], g: data.bg[1], b: data.bg[2] });
+    await invoke('update_store_rgb', { key: 'foreground', r: data.fg[0], g: data.fg[1], b: data.fg[2], alpha: data.fgAlpha ?? 1 });
+  } catch (err) {
+    console.error('Error restoring last colours:', err);
+  }
+}
+
 // Fonction immédiatement invoquée asynchrone (IIFE) pour la synchronisation avec Tauri
 // Immediately Invoked Async Function Expression (IIFE) for Tauri synchronization
 (async () => {
@@ -444,7 +511,16 @@ onThemeChange((theme) => {
     // Synchronize Alpine store with new payload received from Tauri
     // This makes the interface reactive to backend changes
     store.updateFromTauriStore(event.payload);
+
+    // Mémorise la combinaison de couleurs
+    // Remember the colors combination
+    if (persistColorsReady) saveLastColors();
   });
+
+  // Étape 2b : Restaure la dernière combinaison de couleurs si l'option est activée
+  // Step 2b: Restore the last colour combination if the option is enabled
+  await restoreLastColors();
+  persistColorsReady = true;
 
   // Étape 3 : Écoute les changements de profil ICC depuis le menu
   // Step 3: Listen for ICC profile changes from the menu
