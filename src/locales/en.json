@@ -61,6 +61,7 @@
     "about_license": "License",
     "about_repository": "View on GitHub",
     "about_report_bug": "Report a bug",
+    "about_translators": "Translations",
     "about_support_title": "Support this project",
     "about_support": "This project is built entirely on my own free time, driven by the belief that accessibility tooling should be open and available to everyone. To keep it trustworthy and easy to install, I need code signing certificates for both Windows and macOS — which come with a real annual cost. If this tool saves you time or helps your team ship more accessible products, consider sponsoring it. Even a small contribution goes a long way toward keeping it signed, maintained, and free.",
     "about_sponsor": "Sponsor on GitHub",

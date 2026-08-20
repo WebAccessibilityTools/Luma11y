@@ -467,8 +467,9 @@ input[type="number"] {
   text-underline-offset: 3px;
 }
 
-/* Section de soutien / Support section */
-.about-support {
+/* Sections crédits & soutien / Credits & support sections */
+.about-support,
+.about-credits {
   margin-top: 1.25rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--border-color-light);
@@ -476,11 +477,19 @@ input[type="number"] {
   text-align: center;
 }
 
-.about-support h2 {
+.about-support h2,
+.about-credits h2 {
   margin: 0 0 0.5rem;
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-color-strong);
+}
+
+.credit-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
 }
 
 .about-support p {

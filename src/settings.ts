@@ -138,6 +138,12 @@ Alpine.store('settings', {
   // App metadata for the "About" tab
   appInfo: { name: 'Luma11y', version: '', authors: '', description: '' },
 
+  // Crédits des traducteurs, par langue (endonymes).
+  // Translator credits, per language (endonyms).
+  translators: [
+    { language: 'Français', names: 'Cédric Trévisan' },
+  ] as { language: string; names: string }[],
+
   // Ouvre une URL dans le navigateur par défaut
   // Opens a URL in the default browser
   openExternal(url: string): void {

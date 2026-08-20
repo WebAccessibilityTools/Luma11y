@@ -311,6 +311,15 @@
               </a>
             </div>
           </section>
+
+          <section class="about-credits" x-show="$store.settings.translators.length">
+            <h2 x-text="$store.settings.t('settings.about_translators')">Translations</h2>
+            <ul class="credit-list">
+              <template x-for="tr in $store.settings.translators" :key="tr.language">
+                <li><strong x-text="tr.language"></strong> — <span x-text="tr.names"></span></li>
+              </template>
+            </ul>
+          </section>
         </div>
       </div>
 
