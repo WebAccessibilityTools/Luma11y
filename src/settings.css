@@ -1,8 +1,6 @@
 /* =============================================================================
    settings.css - Styles spécifiques à la fenêtre Préférences
    settings.css - Settings window specific styles
-   Utilise les variables --color-* définies dans style.css
-   Uses --color-* variables defined in style.css
    ============================================================================= */
 
 :root {
@@ -25,10 +23,9 @@ body {
 
 main {
   flex: 1;
-  overflow-y: auto;
-  padding: 0 1.25rem;
+  overflow: hidden;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 }
 
 /* -----------------------------------------------------------------------------
@@ -37,35 +34,75 @@ main {
 
 .tabs {
   display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding-top: 1rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  width: 9.5rem;
+  padding: 1rem 0.5rem;
+  border-right: 1px solid var(--border-color);
   background-color: var(--background-color-grey);
 
   button {
+    position: relative;
     font-size: 13px;
     font-weight: 500;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.75rem 0.5rem 1.35rem;
     border: none;
+    border-radius: 7px;
     background: none;
     color: var(--text-color);
     cursor: pointer;
-    border-bottom: 3px solid transparent;
-    margin-bottom: -1px;
+    text-align: left;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0.5rem;
+      top: 50%;
+      width: 3px;
+      height: 0;
+      border-radius: 2px;
+      background: currentColor;
+      transform: translateY(-50%);
+      transition: height 0.15s ease;
+    }
+
+    &:hover:not(.active) {
+      background: var(--background-color);
+      color: var(--text-color-strong);
+    }
 
     &.active {
-      color: var(--text-color-strong);
-      border-bottom-color: var(--border-color-strong);
+      color: var(--text-color-inverted);
+      background: var(--button-active-color);
       font-weight: 600;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    }
+
+    &.active::before {
+      height: 1rem;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--button-active-color);
+      outline-offset: 2px;
+    }
+
+    &.active:focus-visible {
+      outline-color: var(--text-color-inverted);
+      outline-offset: -4px;
     }
   }
 }
 
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+}
+
 .tab-panel {
-  padding-top: 0.75rem;
   flex: 1;
 }
 
@@ -343,4 +380,135 @@ input[type="number"] {
 .btn-save:hover {
   color: var(--text-color);
   background: var(--background-color);
+}
+
+/* -----------------------------------------------------------------------------
+   ONGLET À PROPOS
+   ABOUT TAB
+   ----------------------------------------------------------------------------- */
+
+.about {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+  padding: 1.5rem 1rem;
+  background: var(--background-color);
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+}
+
+.about-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color-strong);
+}
+
+.about-version {
+  font-size: 0.85rem;
+  color: var(--text-color-light);
+  margin: 0;
+}
+
+.about-description {
+  margin: 0.5rem 0 0.75rem;
+  max-width: 24rem;
+  color: var(--text-color);
+}
+
+.about-meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.about-meta dt {
+  font-weight: 600;
+  text-align: right;
+  color: var(--text-color-light);
+}
+
+.about-meta dd {
+  margin: 0;
+  text-align: left;
+  color: var(--text-color);
+}
+
+.about-copyright {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-color-light);
+}
+
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.5rem;
+  margin-top: 1rem;
+}
+
+.about-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-color-strong);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.about-link span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Sections crédits & soutien / Credits & support sections */
+.about-support,
+.about-credits {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color-light);
+  max-width: 30rem;
+  text-align: center;
+}
+
+.about-support h2,
+.about-credits h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-color-strong);
+}
+
+.credit-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.about-support p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+
+.about-support .about-link {
+  color: var(--button-active-color);
+}
+
+.about-link:hover span {
+  text-decoration: none;
+}
+
+.about-link:focus-visible {
+  outline: 3px solid var(--text-color);
+  outline-offset: 3px;
+  border-radius: 2px;
 }

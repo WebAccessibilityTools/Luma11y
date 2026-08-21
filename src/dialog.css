@@ -1,0 +1,67 @@
+/* Réinitialise les marges, paddings et définit box-sizing pour tous les éléments */
+/* Reset margins, paddings and set box-sizing for all elements */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Styles du corps de la page - centrage vertical et horizontal */
+/* Body styles - vertical and horizontal centering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+strong {
+  color: var(--text-color-strong);
+}
+
+button {
+  &:focus-visible {
+    outline-width: 3px;
+    outline-offset: 4px;
+    outline-style: solid;
+    outline-color: var(--text-color);
+  }
+}
+
+.btn {
+  font-size: 1rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Button hover state*/
+  &:hover {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: var(--button-border-size) solid var(--text-color);
+  }
+
+  /* Disabled button state */
+  &:disabled {
+    cursor: wait;
+  }
+
+  &.btn-primary {
+    background: var(--color-slate-900);
+    color: var(--color-slate-100);
+    border: 1px solid transparent;
+  }
+
+  &.btn-secondary {
+    background: transparent;
+    color: var(--color-slate-900);
+    border: 1px solid var(--color-slate-400);
+  }
+}

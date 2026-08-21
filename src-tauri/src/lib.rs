@@ -30,6 +30,10 @@ mod store;
 /// Color manipulation functions
 mod color;
 
+/// Ratio de contraste WCAG 2.2
+/// WCAG 2.2 contrast ratio
+mod wcag_contrast;
+
 /// Noms de couleurs CSS (W3C CSS Color Module Level 4)
 /// CSS named colors (W3C CSS Color Module Level 4)
 mod color_names;
@@ -46,6 +50,10 @@ mod i18n;
 /// Per-language translation tables
 mod lang;
 
+/// Vérification des permissions système (capture d'écran macOS)
+/// System permission checks (macOS screen capture)
+mod permissions;
+
 // =============================================================================
 // INITIALISATION
 // INITIALIZATION
@@ -54,7 +62,7 @@ mod lang;
 
 // Import pour le système de menu
 // Import for the menu system
-use tauri::menu::{CheckMenuItemBuilder, Menu, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder, AboutMetadata};
+use tauri::menu::{CheckMenuItemBuilder, Menu, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder};
 
 // Import pour l'émission d'événements
 // Import for event emission
@@ -170,18 +178,9 @@ fn create_icc_submenu<R: tauri::Runtime>(app: &tauri::AppHandle<R>, locale: &str
 fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error> {
     // === MENU APPLICATION (premier menu sur macOS) ===
     // === APPLICATION MENU (first menu on macOS) ===
-    // Crée l'élément "À propos" avec métadonnées / Create "About" item with metadata
-    let about = PredefinedMenuItem::about(
-        app,
-        Some(i18n::menu_t(locale, "about")), // Titre / Title
-        Some(AboutMetadata {
-            name: Some("Luma11y".to_string()),    // Nom de l'app / App name
-            version: Some("1.0.0".to_string()),           // Version / Version
-            copyright: Some("xxx Licence".to_string()), // Copyright / Copyright
-            authors: Some(vec!["Cédric Trévisan".to_string()]), // Auteurs / Authors
-            ..Default::default()                          // Autres champs par défaut / Other fields default
-        }),
-    )?;
+    // Élément "À propos" : ouvre l'onglet dédié dans Settings.
+    // "About" item: opens the dedicated Settings tab.
+    let about = MenuItemBuilder::with_id("about", i18n::menu_t(locale, "about")).build(app)?;
 
     // Élément Settings avec raccourci Cmd+, / Settings item with Cmd+, shortcut
     let settings_item = MenuItemBuilder::with_id("settings", i18n::menu_t(locale, "settings"))
@@ -415,9 +414,21 @@ fn set_copy_templates(app: tauri::AppHandle, state: tauri::State<store::AppState
 
 /// Ouvre ou focus la fenêtre Settings, avec config plateforme-spécifique.
 /// Opens or focuses the Settings window with platform-specific config.
-fn open_settings_window_impl(app: &tauri::AppHandle) {
+fn open_settings_window_impl(app: &tauri::AppHandle, tab: &str) {
+    // Mémorise l'onglet cible : la fenêtre le lira à l'init via
+    // `get_settings_initial_tab`.
+    // Remember the target tab: the window reads it on init via
+    // `get_settings_initial_tab`.
+    {
+        let state = app.state::<store::AppState>();
+        *state.settings_tab.lock().unwrap() = tab.to_string();
+    }
+
     if let Some(window) = app.get_webview_window("settings") {
         let _ = window.set_focus();
+        // Déjà ouverte : notifie la fenêtre de basculer d'onglet.
+        // Already open: tell the window to switch tab.
+        let _ = window.emit("settings-navigate", tab);
         return;
     }
 
@@ -443,10 +454,10 @@ fn open_settings_window_impl(app: &tauri::AppHandle) {
         WebviewUrl::App("settings.html".into()),
     )
     .title(settings_title)
-    .inner_size(500.0, 700.0)
+    .inner_size(640.0, 700.0)
     .resizable(true)
     .maximizable(false)
-    .min_inner_size(400.0, 700.0)
+    .min_inner_size(520.0, 700.0)
     .always_on_top(always_on_top)
     .center();
 
@@ -484,8 +495,38 @@ fn open_settings_window_impl(app: &tauri::AppHandle) {
 async fn open_settings_window(app: tauri::AppHandle) {
     let inner = app.clone();
     let _ = app.run_on_main_thread(move || {
-        open_settings_window_impl(&inner);
+        open_settings_window_impl(&inner, "general");
     });
+}
+
+/// Renvoie l'onglet à activer à l'ouverture de la fenêtre Settings.
+/// Returns the tab to activate when the Settings window opens.
+#[tauri::command]
+fn get_settings_initial_tab(state: tauri::State<store::AppState>) -> String {
+    state.settings_tab.lock().unwrap().clone()
+}
+
+/// Métadonnées de l'application pour l'onglet "À propos".
+/// Application metadata for the "About" tab.
+#[derive(serde::Serialize)]
+struct AppInfo {
+    name: String,
+    version: String,
+    authors: String,
+    description: String,
+}
+
+/// Renvoie les métadonnées de l'app (nom, version, auteurs, description).
+/// Returns the app metadata (name, version, authors, description).
+#[tauri::command]
+fn get_app_info(app: tauri::AppHandle) -> AppInfo {
+    let info = app.package_info();
+    AppInfo {
+        name: info.name.clone(),
+        version: info.version.to_string(),
+        authors: info.authors.to_string(),
+        description: info.description.to_string(),
+    }
 }
 
 /// Applique l'état always-on-top.
@@ -578,6 +619,9 @@ pub fn run() {
         // Plugin pour les raccourcis clavier globaux (système-wide)
         // Plugin for global (system-wide) keyboard shortcuts
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        // Plugin pour ouvrir des URLs/fichiers avec l'app par défaut
+        // Plugin to open URLs/files with the default app
+        .plugin(tauri_plugin_opener::init())
         // Initialise l'état global du color store
         // Initialize global color store state
         .manage(store::AppState {
@@ -587,6 +631,7 @@ pub fn run() {
             appearance: Mutex::new("auto".to_string()),
             style_theme: Mutex::new("modern".to_string()),
             always_on_top: Mutex::new(false),
+            settings_tab: Mutex::new("general".to_string()),
         })
         // Configure le menu de l'application
         // Configure the application menu
@@ -623,7 +668,13 @@ pub fn run() {
 
             match menu_id {
                 "settings" => {
-                    open_settings_window_impl(app);
+                    open_settings_window_impl(app, "general");
+                    return;
+                }
+                "about" => {
+                    // Remplace le dialogue natif "À propos" par l'onglet dédié.
+                    // Replaces the native "About" dialog with the dedicated tab.
+                    open_settings_window_impl(app, "about");
                     return;
                 }
                 "appearance_auto" | "appearance_light" | "appearance_dark" => {
@@ -772,6 +823,11 @@ pub fn run() {
             set_copy_templates,
             set_always_on_top,
             open_settings_window,
+            get_settings_initial_tab,
+            get_app_info,
+            permissions::check_screen_recording_permission,
+            permissions::request_screen_recording_permission,
+            permissions::open_screen_recording_settings,
         ])
         // Lance l'application Tauri
         // Run the Tauri application

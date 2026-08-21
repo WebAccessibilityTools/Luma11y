@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Screen Recording permission</title>
+    <link rel="stylesheet" href="/src/colors.css" />
+    <link rel="stylesheet" href="/src/dialog.css" />
+    <link rel="stylesheet" href="/src/permission.css" />
+  </head>
+  <body x-data x-effect="
+    document.title = $store.perm.t('permissions.screen_recording_title');
+    document.documentElement.lang = $store.perm.locale;
+  ">
+    <header>
+      <app-titlebar x-bind:app-title="$store.perm.t('permissions.screen_recording_title')"></app-titlebar>
+    </header>
+    <main>
+      <h1 x-text="$store.perm.t('permissions.screen_recording_title')">Screen Recording permission required</h1>
+      <p x-text="$store.perm.t('permissions.screen_recording_message')"></p>
+      <p class="instructions" x-text="$store.perm.t('permissions.screen_recording_instructions')"></p>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" @click="$store.perm.close()" x-text="$store.perm.t('permissions.close')"></button>
+        <button type="button" class="btn btn-primary" @click="$store.perm.openSettings()" x-text="$store.perm.t('permissions.open_settings')"></button>
+      </div>
+    </main>
+
+    <script type="module" src="/src/permission.ts"></script>
+  </body>
+</html>

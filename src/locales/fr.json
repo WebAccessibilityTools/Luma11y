@@ -54,6 +54,18 @@
     "title": "Préférences",
     "tab_general": "Général",
     "tab_templates": "Modèles de copie",
+    "tab_about": "À propos",
+    "about_version": "Version {0}",
+    "about_tagline": "Déterminez la lisibilité du texte et le contraste des éléments visuels, tels que les contrôles graphiques et les indicateurs visuels",
+    "about_author": "Auteur",
+    "about_license": "Licence",
+    "about_repository": "Voir sur GitHub",
+    "about_report_bug": "Signaler un bug",
+    "about_translators": "Traductions",
+    "about_support_title": "Soutenir le projet",
+    "about_support": "Ce projet est entièrement développé sur mon temps libre, porté par la conviction que les outils d'accessibilité doivent être ouverts et accessibles à tous. Pour le garder fiable et facile à installer, j'ai besoin de certificats de signature de code pour Windows et macOS — qui ont un coût annuel réel. Si cet outil vous fait gagner du temps ou aide votre équipe à livrer des produits plus accessibles, envisagez de le sponsoriser. Même une petite contribution aide grandement à le garder signé, maintenu et gratuit.",
+    "about_sponsor": "Sponsoriser sur GitHub",
+    "about_coffee": "Buy Me a Coffee",
     "language": "Langue",
     "auto": "Automatique (système)",
     "add_template": "Ajouter un modèle",
@@ -73,6 +85,8 @@
     "toast_duration": "Durée du toast",
     "toast_manual": "Fermeture manuelle",
     "toast_seconds": "Secondes",
+    "restore_colors": "Réafficher les dernières couleurs au lancement",
+    "restore_colors_help": "Rouvre l'application avec les couleurs de premier plan et d'arrière-plan de votre dernière session.",
     "color_formats": "Formats de couleur",
     "color_formats_help": "Choisissez les formats disponibles dans l'interface",
     "tab_shortcuts": "Raccourcis",
@@ -111,5 +125,12 @@
     "always_on_top": "Toujours au premier plan",
     "appearance": "Apparence",
     "appearance_auto": "Auto"
+  },
+  "permissions": {
+    "screen_recording_title": "Autorisation d'enregistrement de l'écran requise",
+    "screen_recording_message": "Luma11y a besoin de l'autorisation « Enregistrement de l'écran et de l'audio système » pour lire la couleur des pixels sous le curseur. Sans elle, la pipette ne peut pas capturer l'écran.",
+    "screen_recording_instructions": "Ouvrez Réglages Système, activez Luma11y sous « Enregistrement de l'écran et de l'audio système », puis relancez l'application.",
+    "open_settings": "Ouvrir les Réglages Système",
+    "close": "Continuer quand même"
   }
 }

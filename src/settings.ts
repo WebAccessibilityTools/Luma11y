@@ -5,6 +5,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { emit } from "@tauri-apps/api/event";
 import Alpine from 'alpinejs';
@@ -40,6 +41,7 @@ import {
 } from './colors';
 import './components/AppTitleBar';
 import './components/WindowResizeGrips';
+import './components/SvgIcon';
 
 // =============================================================================
 // DÉTECTION LOCALE SYSTÈME
@@ -127,10 +129,30 @@ Alpine.store('settings', {
   // Durée du toast en secondes (0 = manuel) / Toast duration in seconds (0 = manual)
   toastDuration: parseInt(localStorage.getItem('luma11y-toast-duration') ?? '3', 10),
 
+  // Réaffiche la dernière combinaison de couleurs au lancement
+  // Restore the last colour combination on startup
+  restoreColors: localStorage.getItem('luma11y-restore-colors') === 'true',
+
   // Formats de couleur activables (hors hex) et ceux activés
   // Toggleable color formats (excluding hex) and the enabled ones
   selectableFormats: selectableFormats as string[],
   enabledFormats: loadEnabledFormats() as string[],
+
+  // Métadonnées de l'app pour l'onglet "À propos"
+  // App metadata for the "About" tab
+  appInfo: { name: 'Luma11y', version: '', authors: '', description: '' },
+
+  // Crédits des traducteurs, par langue (endonymes).
+  // Translator credits, per language (endonyms).
+  translators: [
+    { language: 'Français', names: 'Cédric Trévisan' },
+  ] as { language: string; names: string }[],
+
+  // Ouvre une URL dans le navigateur par défaut
+  // Opens a URL in the default browser
+  openExternal(url: string): void {
+    openUrl(url).catch((err) => console.error('Error opening URL:', err));
+  },
 
   // Active/désactive un format
   // Toggles a format on/off
@@ -198,6 +220,7 @@ Alpine.store('settings', {
     localStorage.setItem('luma11y-shortcuts', JSON.stringify((this as any).shortcuts));
     localStorage.setItem('luma11y-toast-duration', String((this as any).toastDuration));
     localStorage.setItem('luma11y-enabled-formats', JSON.stringify((this as any).enabledFormats));
+    localStorage.setItem('luma11y-restore-colors', String((this as any).restoreColors));
 
     // Persiste le thème, le style et la locale
     // Persist theme, style theme and locale
@@ -300,4 +323,30 @@ requestAnimationFrame(() => {
     const s = Alpine.store('settings') as any;
     s.preference = getLocalePreference();
   });
+
+  // Récupère les métadonnées de l'app pour l'onglet "À propos"
+  // Fetch app metadata for the "About" tab
+  try {
+    const info = await invoke<{ name: string; version: string; authors: string; description: string }>('get_app_info');
+    (Alpine.store('settings') as any).appInfo = info;
+  } catch (error) {
+    console.error('Error loading app info:', error);
+  }
+
+  // Bascule vers l'onglet demandé quand la fenêtre est déjà ouverte
+  // Switch to the requested tab when the window is already open
+  await listen<string>('settings-navigate', (event) => {
+    window.dispatchEvent(new CustomEvent('settings-navigate', { detail: event.payload }));
+  });
+
+  // Onglet initial
+  // Initial tab
+  try {
+    const initialTab = await invoke<string>('get_settings_initial_tab');
+    if (initialTab && initialTab !== 'general') {
+      window.dispatchEvent(new CustomEvent('settings-navigate', { detail: initialTab }));
+    }
+  } catch (error) {
+    console.error('Error loading initial settings tab:', error);
+  }
 })();

@@ -18,6 +18,7 @@ export default defineConfig(async () => ({
         main: resolve(__dirname, 'index.html'),
         settings: resolve(__dirname, 'settings.html'),
         'style-chooser': resolve(__dirname, 'style-chooser.html'),
+        permission: resolve(__dirname, 'permission.html'),
       },
     },
   },

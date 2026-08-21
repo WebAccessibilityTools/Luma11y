@@ -1,0 +1,43 @@
+/* =============================================================================
+   permission.css - Styles de la fenêtre de permission
+   permission.css - Permission window styles
+   Utilise uniquement les variables --color-* de colors.css
+   Uses only --color-* variables from colors.css
+   ============================================================================= */
+
+:root {
+  --text-color: var(--color-slate-900);
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-slate-100);
+  color: var(--color-slate-700);
+}
+
+main {
+  padding: 0 1.25rem;
+}
+
+h1 {
+  font-size: 1.2rem;
+  color: var(--color-slate-900);
+}
+
+p {
+  line-height: 1.5;
+  color: var(--color-slate-500);
+  padding: 0.5rem 0;
+}
+
+.actions {
+  display: flex;
+  justify-content:center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
