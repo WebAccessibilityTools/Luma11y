@@ -54,6 +54,18 @@
     "title": "Nastavenia",
     "tab_general": "Všeobecné",
     "tab_templates": "Šablóny kopírovania",
+    "tab_about": "O aplikácii",
+    "about_version": "Verzia {0}",
+    "about_tagline": "Zistite čitateľnosť textu a kontrast vizuálnych prvkov, ako sú grafické ovládacie prvky a vizuálne indikátory.",
+    "about_author": "Autor",
+    "about_license": "Licencia",
+    "about_repository": "Zobraziť na GitHub",
+    "about_report_bug": "Nahlásiť chybu",
+    "about_translators": "Preklady",
+    "about_support_title": "Podporte tento projekt",
+    "about_support": "Tento projekt vzniká výhradne v mojom voľnom čase, s presvedčením, že nástroje pre prístupnosť by mali byť otvorené a dostupné pre každého. Aby zostal dôveryhodný a jednoducho inštalovateľný, potrebujem certifikáty na podpisovanie kódu pre Windows aj macOS — ktoré predstavujú reálne ročné náklady. Ak vám tento nástroj šetrí čas alebo pomáha vášmu tímu vytvárať prístupnejšie produkty, zvážte jeho podporu. Aj malý príspevok výrazne pomôže udržať ho podpísaný, udržiavaný a bezplatný.",
+    "about_sponsor": "Podporiť na GitHub",
+    "about_coffee": "Kúpiť mi kávu",
     "language": "Jazyk",
     "auto": "Automaticky (systém)",
     "add_template": "Pridať šablónu",
@@ -73,6 +85,8 @@
     "toast_duration": "Trvanie upozornenia",
     "toast_manual": "Zatvoriť manuálne",
     "toast_seconds": "Sekundy",
+    "restore_colors": "Obnoviť posledné farby pri spustení",
+    "restore_colors_help": "Znova otvorí aplikáciu s farbou popredia a pozadia z vašej poslednej relácie.",
     "color_formats": "Formáty farieb",
     "color_formats_help": "Vyberte, ktoré formáty sú dostupné v rozhraní",
     "tab_shortcuts": "Skratky",
@@ -111,5 +125,12 @@
     "always_on_top": "Vždy navrchu",
     "appearance": "Vzhľad",
     "appearance_auto": "Automaticky"
+  },
+  "permissions": {
+    "screen_recording_title": "Vyžaduje sa povolenie na nahrávanie obrazovky",
+    "screen_recording_message": "Luma11y potrebuje povolenie „Nahrávanie obrazovky a systémového zvuku“ na čítanie farby pixelov pod kurzorom. Bez neho nemôže pipeta na farby zachytávať obrazovku.",
+    "screen_recording_instructions": "Otvorte Systémové nastavenia, povoľte Luma11y v sekcii „Nahrávanie obrazovky a systémového zvuku“ a potom aplikáciu reštartujte.",
+    "open_settings": "Otvoriť Systémové nastavenia",
+    "close": "Napriek tomu pokračovať"
   }
 }

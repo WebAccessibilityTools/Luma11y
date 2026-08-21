@@ -146,6 +146,7 @@ Alpine.store('settings', {
   // Translator credits, per language (endonyms).
   translators: [
     { language: 'Français', names: 'Cédric Trévisan' },
+    { language: 'Slovenčina', names: 'Radoslav Ďurač' },
   ] as { language: string; names: string }[],
 
   // Ouvre une URL dans le navigateur par défaut
