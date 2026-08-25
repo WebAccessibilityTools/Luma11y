@@ -181,7 +181,7 @@ function loadCopyTemplates(): CopyTemplate[] {
     if (raw) return JSON.parse(raw);
   } catch {}
   const defaultShortcut = navigator.platform.includes('Mac') ? 'Cmd+S' : 'Ctrl+S';
-  return [{ name: 'Short', template: '%f.hex% / %b.hex% = %cr%:1', shortcut: defaultShortcut }];
+  return [{ name: i18nT('settings.default_template_name'), template: '%f.hex% / %b.hex% = %cr%:1', shortcut: defaultShortcut }];
 }
 
 // Load all shortcuts

@@ -5,18 +5,19 @@
 
 import en from './locales/en.json';
 import fr from './locales/fr.json';
+import sk from './locales/sk.json';
 
 // Traductions disponibles / Available translations
-const translations: Record<string, Record<string, unknown>> = { en, fr };
+const translations: Record<string, Record<string, unknown>> = { en, fr, sk };
 
 // Langues supportées / Supported languages
-const SUPPORTED_LOCALES = ['en', 'fr'];
+const SUPPORTED_LOCALES = ['en', 'fr', 'sk'];
 const DEFAULT_LOCALE = 'en';
 const STORAGE_KEY = 'luma11y-locale';
 const PREFERENCE_KEY = 'luma11y-locale-preference';
 
 // Type de préférence / Preference type
-export type LocalePreference = 'auto' | 'en' | 'fr';
+export type LocalePreference = 'auto' | 'en' | 'fr' | 'sk';
 
 // Locale courante / Current locale
 let currentLocale = DEFAULT_LOCALE;
@@ -74,11 +75,11 @@ export function getLocale(): string {
   return currentLocale;
 }
 
-/// Retourne la préférence de locale stockée ('auto', 'en', ou 'fr')
-/// Returns the stored locale preference ('auto', 'en', or 'fr')
+/// Retourne la préférence de locale stockée ('auto', 'en', 'fr', ou 'sk')
+/// Returns the stored locale preference ('auto', 'en', 'fr', or 'sk')
 export function getLocalePreference(): LocalePreference {
   const stored = localStorage.getItem(PREFERENCE_KEY);
-  if (stored === 'auto' || stored === 'en' || stored === 'fr') {
+  if (stored === 'auto' || stored === 'en' || stored === 'fr' || stored === 'sk') {
     return stored;
   }
   // Si pas de préférence mais une locale explicite stockée, c'est un choix explicite
@@ -93,7 +94,7 @@ export function getLocalePreference(): LocalePreference {
 /// Applique une locale effective sans persister (preview)
 /// Applies an effective locale without persisting (preview)
 ///
-/// @param pref - 'auto', 'en', ou 'fr'
+/// @param pref - 'auto', 'en', 'fr', ou 'sk'
 /// @param systemLocale - locale système (nécessaire si pref === 'auto')
 export function previewLocalePreference(pref: LocalePreference, systemLocale?: string): void {
   const effective = pref === 'auto'
@@ -111,7 +112,7 @@ export function previewLocalePreference(pref: LocalePreference, systemLocale?: s
 /// Change la préférence de locale et applique la locale effective
 /// Changes the locale preference and applies the effective locale
 ///
-/// @param pref - 'auto', 'en', ou 'fr'
+/// @param pref - 'auto', 'en', 'fr', ou 'sk'
 /// @param systemLocale - locale système (nécessaire si pref === 'auto')
 export function setLocalePreference(pref: LocalePreference, systemLocale?: string): void {
   localStorage.setItem(PREFERENCE_KEY, pref);
