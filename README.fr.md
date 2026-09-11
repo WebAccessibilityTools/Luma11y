@@ -45,37 +45,10 @@ Ou, si vous préférez, offrez-moi un café pour m'aider à améliorer cet outil
 
 ## Table des matières
 
-- [Fonctionnalités](#fonctionnalités)
 - [Installation (macOS)](#installation-macos)
 - [Contribuer](#contribuer)
 - [Contact](#contact)
 - [Licence](#licence)
-
-## Fonctionnalités
-
-### Pour la Bêta 2
-
-| Fonctionnalité | Statut |
-|---|:---:|
-| Accessibilité | En cours |
-| Composante alpha | Prévu |
-| Valeurs de couleur HCL | Prévu |
-| Valeurs de couleur HSV | Prévu |
-| Valeurs de couleur LAB | Prévu |
-| Valeurs de couleur LCHab | Prévu |
-| Valeurs de couleur CMJN | Prévu |
-| Saisie libre | Fait |
-| Installeur Windows/macOS | Prévu |
-| Mise à jour automatique | Prévu |
-| Certificats signés | Prévu |
-
-### Futur
-
-| Fonctionnalité | Statut |
-|---|:---:|
-| Version Linux | Prévu |
-| Mode réduit/barre de menus | Prévu |
-| Simulateur de daltonisme | Prévu |
 
 ## Installation (macOS)
 

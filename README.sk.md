@@ -47,33 +47,10 @@ Alebo, ak preferujete, kúpte mi kávu na ďalšie vylepšovanie tohto nástroja
 
 ## Obsah
 
-- [Funkcie](#funkcie)
 - [Inštalácia (macOS)](#inštalácia-macos)
 - [Prispievanie](#prispievanie)
 - [Kontakt](#kontakt)
 - [Licencia](#licencia)
-
-## Funkcie
-
-### Pre Betu 2
-
-| Funkcia | Stav |
-|---|:---:|
-| Prístupnosť | Prebieha |
-| Alfa farebná zložka | Plánované |
-| Nové formáty farieb | hotovo |
-| Voľné zadávanie textu | Hotovo |
-| Inštalátor pre Windows/macOS | Plánované |
-| Automatická aktualizácia | Plánované |
-| Podpísané certifikáty | Plánované |
-
-### Budúcnosť
-
-| Funkcia | Stav |
-|---|:---:|
-| Verzia pre Linux | Plánované |
-| Zjednodušený režim / panel menu | Plánované |
-| Simulátor farbosleposti | Plánované |
 
 ## Inštalácia (macOS)
 

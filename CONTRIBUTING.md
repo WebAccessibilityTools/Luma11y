@@ -49,16 +49,28 @@ To build a new version:
   npm run dist
 ```
 
-The CHANGELOG.md is generated using github-changelog-generator
-https://github.com/github-changelog-generator/github-changelog-generator
+The CHANGELOG.md is generated from the git history with
+[git-cliff](https://git-cliff.org), configured in `cliff.toml`. Commits are
+grouped following the [Conventional Commits](https://www.conventionalcommits.org)
+convention (e.g. `feat:`, `fix:`, `doc:`), but non-conventional messages are
+still included (in the "Other" group), so a strict format is not required.
+
+The script only generates the *unreleased* section (commits since the latest git
+tag) and prepends it to CHANGELOG.md, so previously released sections are never
+rewritten and can be hand-edited safely. Run it once when cutting a release:
 
 ```shell
-docker run -it --rm -v "$(pwd)":/usr/local/src/your-app githubchangeloggenerator/github-changelog-generator github_changelog_generator -u WebAccessibilityTools -p Luma11y --since-tag=v4.0.0 --future-release=v4.0.1 -t <token>
+pnpm changelog
+```
+
+Tip: pass a tag to label the new section with the version instead of
+`[unreleased]`:
+
+```shell
+pnpm changelog --tag v0.2.0
 ```
 
 Other commands are available in the `package.json` file.
-
-
 
 ## Development
 > pnpm install
