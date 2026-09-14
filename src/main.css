@@ -1,14 +1,11 @@
 /* =============================================================================
-   main.css - Styles pour Luma11y
    main.css - Styles for Luma11y
    ============================================================================= */
 
 /* -----------------------------------------------------------------------------
-   RESET ET BASE
    RESET AND BASE
    ----------------------------------------------------------------------------- */
 
-/* Réinitialise les marges, paddings et définit box-sizing pour tous les éléments */
 /* Reset margins, paddings and set box-sizing for all elements */
 * {
   margin: 0;
@@ -22,7 +19,6 @@ html, body {
   overflow: hidden;
 }
 
-/* Styles du corps de la page - centrage vertical et horizontal */
 /* Body styles - vertical and horizontal centering */
 body {
   -webkit-font-smoothing: antialiased;
@@ -91,7 +87,6 @@ button {
 }
 
 /* -----------------------------------------------------------------------------
-   ZONE DE RÉSULTATS
    RESULTS AREA
    ----------------------------------------------------------------------------- */
 
@@ -120,7 +115,7 @@ button {
         justify-content: center;
         flex-direction: column;
 
-        /* Conteneur nom + hex / Color name + hex container */
+        /* Color name + hex container */
         .color-value {
           display: flex;
           flex-direction: column;
@@ -129,14 +124,13 @@ button {
           gap: 0.4rem;
         }
 
-        /* Nom CSS de la couleur / CSS color name */
+        /* CSS color name */
         .color-name {
           font-weight: 600;
           font-size: 1.1em;
           text-transform: capitalize;
         }
 
-        /* Saisie / affichage de la valeur */
         /* value input / display */
         .css-value {
           font-family: 'Monaco', 'Menlo', monospace;
@@ -164,7 +158,7 @@ button {
         }
       }
 
-      /* Message d'erreur sous l'input hex / Hex input error message */
+      /* Hex input error message */
       .error-message {
         display: flex;
         align-items: center;
@@ -251,7 +245,6 @@ color-controls {
 }
 
 /* -----------------------------------------------------------------------------
-   TOAST DE CONFIRMATION
    CONFIRMATION TOAST
    ----------------------------------------------------------------------------- */
 

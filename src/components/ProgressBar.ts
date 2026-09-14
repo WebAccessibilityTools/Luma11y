@@ -120,7 +120,7 @@ export class ProgressBar extends LitElement {
     this.dispatchEvent(new CustomEvent('toggle-labels', { bubbles: true, composed: true }));
   }
 
-  // Convertit une valeur sur l'échelle 1-21 en pourcentage
+  // Convert a value on the 1-21 scale to a percentage
   private toPercent(value: number): number {
     return ((value - 1) / 20) * 100;
   }
@@ -130,7 +130,7 @@ export class ProgressBar extends LitElement {
     const s1Percent = this.toPercent(this.split1);
     const s2Percent = this.split2 != null ? this.toPercent(this.split2) : 100;
 
-    // Dégradé dynamique : Si pas de split2, on ne passe que du rouge au jaune/vert
+    // Dynamic gradient: without split2, only go from red to yellow/green
     const gradient = this.split2 != null
       ? `linear-gradient(to right,
           var(--progress-fail) 0%, var(--progress-fail) ${s1Percent}%,
@@ -183,7 +183,7 @@ export class ProgressBar extends LitElement {
   }
 }
 
-// Optionnel : déclaration du type pour l'IntelliSense dans JSX/TSX
+// Optional: type declaration for IntelliSense in JSX/TSX
 declare global {
   interface HTMLElementTagNameMap {
     'progress-bar': ProgressBar;

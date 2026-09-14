@@ -1,5 +1,4 @@
 /* =============================================================================
-   classic.css - Thème classique : coins carrés, bordures marquées, style traditionnel
    classic.css - Classic theme: square corners, stronger borders, traditional style
    ============================================================================= */
 
@@ -56,7 +55,7 @@
 
 }
 
-/* Styles du corps / Body styles */
+/* Body styles */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: var(--background-color);
@@ -64,7 +63,7 @@ body {
 }
 
 /* -----------------------------------------------------------------------------
-   Boutons carrés / Square buttons
+   Square buttons
    ----------------------------------------------------------------------------- */
 
 .btn {
@@ -88,7 +87,7 @@ body {
 }
 
 /* -----------------------------------------------------------------------------
-   Aperçu couleurs : coins carrés / Colour preview: square corners
+   Colour preview: square corners
    ----------------------------------------------------------------------------- */
 
 .colors {

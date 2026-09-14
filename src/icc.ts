@@ -11,7 +11,6 @@ export interface ICCProfile {
 }
 
 /**
- * Liste tous les profils ICC disponibles
  * Lists all available ICC profiles
  */
 export async function listICCProfiles(): Promise<ICCProfile[]> {
@@ -19,7 +18,6 @@ export async function listICCProfiles(): Promise<ICCProfile[]> {
 }
 
 /**
- * Sélectionne un profil ICC
  * Selects an ICC profile
  */
 export async function selectICCProfile(profileName: string): Promise<void> {
@@ -27,7 +25,6 @@ export async function selectICCProfile(profileName: string): Promise<void> {
 }
 
 /**
- * Récupère le profil ICC actuellement sélectionné
  * Gets the currently selected ICC profile
  */
 export async function getSelectedICCProfile(): Promise<string | null> {

@@ -1,9 +1,6 @@
 // =============================================================================
-// permission.ts - Point d'entrée de la fenêtre de permission
 // permission.ts - Permission window entry point
 //
-// Affichée au lancement (macOS) si l'app n'a pas l'autorisation d'enregistrement
-// de l'écran, nécessaire à la pipette pour lire les pixels.
 // Shown at launch (macOS) if the app lacks the screen recording authorization
 // required by the color picker to read pixels.
 // =============================================================================
@@ -23,13 +20,12 @@ import './components/AppTitleBar';
 Alpine.store('perm', {
   locale: 'en',
 
-  // Traduction réactive / Reactive translation
+  // Reactive translation
   t(key: string): string {
     void (this as any).locale;
     return i18nT(key);
   },
 
-  // Déclenche la demande système puis ouvre le bon volet des Réglages Système.
   // Triggers the system request then opens the correct System Settings pane.
   async openSettings(): Promise<void> {
     try {
@@ -40,7 +36,7 @@ Alpine.store('perm', {
     }
   },
 
-  // Ferme la fenêtre / Close the window
+  // Close the window
   close(): void {
     getCurrentWindow().close();
   },
@@ -50,7 +46,6 @@ Alpine.store('perm', {
 // INITIALISATION
 // =============================================================================
 
-// Bloque le menu contextuel natif de la webview en build de production.
 // Block the webview's native context menu in production builds.
 if (!import.meta.env.DEV) {
   document.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -60,7 +55,7 @@ Alpine.start();
 initTheme();
 
 (async () => {
-  // Détecte la locale système / Detect system locale
+  // Detect system locale
   let systemLocale: string | undefined;
   try {
     systemLocale = (await getSystemLocale()) ?? undefined;

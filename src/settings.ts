@@ -1,5 +1,4 @@
 // =============================================================================
-// settings.ts - Point d'entrée de la fenêtre Settings
 // settings.ts - Settings window entry point
 // =============================================================================
 
@@ -44,14 +43,12 @@ import './components/WindowResizeGrips';
 import './components/SvgIcon';
 
 // =============================================================================
-// DÉTECTION LOCALE SYSTÈME
 // SYSTEM LOCALE DETECTION
 // =============================================================================
 
 let systemLocale: string | undefined;
 
 // =============================================================================
-// STORE ALPINE POUR SETTINGS
 // ALPINE STORE FOR SETTINGS
 // =============================================================================
 
@@ -99,63 +96,54 @@ function keyboardEventToShortcut(event: KeyboardEvent): string {
   return parts.join('+');
 }
 
-// Résout la locale depuis localStorage avant de construire le store, pour que
-// les valeurs par défaut générées ci-dessous (ex. nom du modèle par défaut)
-// soient déjà dans la bonne langue.
 // Resolve the locale from localStorage before building the store, so default
 // values generated below (e.g. default template name) are already in the
 // right language.
 initLocale();
 
 Alpine.store('settings', {
-  // Préférence actuelle / Current preference
+  // Current preference
   preference: 'auto' as LocalePreference,
 
-  // Locale résolue pour réactivité Alpine / Resolved locale for Alpine reactivity
+  // Resolved locale for Alpine reactivity
   locale: 'en',
 
-  // Raccourcis clavier / Keyboard shortcuts
+  // Keyboard shortcuts
   shortcuts: loadShortcuts() as AppShortcut[],
 
-  // Liste des modèles de copie / Copy templates list
+  // Copy templates list
   templates: loadTemplates() as CopyTemplate[],
 
-  // Thème light/dark/auto / Theme light/dark/auto
+  // Theme light/dark/auto
   theme: getThemePreference() as ThemePreference,
 
-  // Thème de style (moderne/classique) / Style theme (modern/classic)
+  // Style theme (modern/classic)
   styleTheme: getStyleTheme() as StyleTheme,
 
-  // Durée du toast en secondes (0 = manuel) / Toast duration in seconds (0 = manual)
+  // Toast duration in seconds (0 = manual)
   toastDuration: parseInt(localStorage.getItem('luma11y-toast-duration') ?? '3', 10),
 
-  // Réaffiche la dernière combinaison de couleurs au lancement
   // Restore the last colour combination on startup
   restoreColors: localStorage.getItem('luma11y-restore-colors') === 'true',
 
-  // Formats de couleur activables (hors hex) et ceux activés
   // Toggleable color formats (excluding hex) and the enabled ones
   selectableFormats: selectableFormats as string[],
   enabledFormats: loadEnabledFormats() as string[],
 
-  // Métadonnées de l'app pour l'onglet "À propos"
   // App metadata for the "About" tab
   appInfo: { name: 'Luma11y', version: '', authors: '', description: '' },
 
-  // Crédits des traducteurs, par langue (endonymes).
   // Translator credits, per language (endonyms).
   translators: [
     { language: 'Français', names: 'Cédric Trévisan' },
     { language: 'Slovenčina', names: 'Radoslav Ďurač' },
   ] as { language: string; names: string }[],
 
-  // Ouvre une URL dans le navigateur par défaut
   // Opens a URL in the default browser
   openExternal(url: string): void {
     openUrl(url).catch((err) => console.error('Error opening URL:', err));
   },
 
-  // Active/désactive un format
   // Toggles a format on/off
   toggleFormat(id: string): void {
     const list = (this as any).enabledFormats as string[];
@@ -164,58 +152,55 @@ Alpine.store('settings', {
     else list.push(id);
   },
 
-  // Traduction réactive / Reactive translation
+  // Reactive translation
   t(key: string, ...args: (string | number)[]): string {
     void (this as any).locale;
     return i18nT(key, ...args);
   },
 
-  // Change le thème (preview uniquement, persisté à la sauvegarde)
   // Change theme (preview only, persisted on save)
   setTheme(pref: ThemePreference): void {
     (this as any).theme = pref;
     applyTheme(pref);
   },
 
-  // Change le thème de style (preview uniquement, persisté à la sauvegarde)
   // Change style theme (preview only, persisted on save)
   setStyleTheme(theme: StyleTheme): void {
     (this as any).styleTheme = theme;
     applyStyleTheme(theme);
   },
 
-  // Change la préférence de locale (preview uniquement, persisté à la sauvegarde)
   // Change locale preference (preview only, persisted on save)
   apply(pref: LocalePreference): void {
     (this as any).preference = pref;
     previewLocalePreference(pref, systemLocale);
   },
 
-  // Met à jour un raccourci / Update a shortcut
+  // Update a shortcut
   updateShortcut(index: number, event: KeyboardEvent): void {
     if (['Control', 'Alt', 'Shift', 'Meta'].includes(event.key)) return;
     (this as any).shortcuts[index].key = keyboardEventToShortcut(event);
   },
 
-  // Ajoute un modèle / Add a template
+  // Add a template
   addTemplate(): void {
     (this as any).templates.push({ name: '', template: '', shortcut: '' });
   },
 
-  // Supprime un modèle / Remove a template
+  // Remove a template
   removeTemplate(index: number): void {
     (this as any).templates.splice(index, 1);
   },
 
-  // Met à jour le raccourci d'un modèle / Update a template's shortcut
+  // Update a template's shortcut
   updateTemplateShortcut(index: number, event: KeyboardEvent): void {
     if (['Control', 'Alt', 'Shift', 'Meta'].includes(event.key)) return;
     (this as any).templates[index].shortcut = keyboardEventToShortcut(event);
   },
 
-  // Sauvegarde les préférences / Save preferences
+  // Save preferences
   async save(): Promise<void> {
-    // Filtre les modèles sans nom / Filter out templates without a name
+    // Filter out templates without a name
     (this as any).templates = (this as any).templates.filter((t: CopyTemplate) => t.name.trim() !== '');
     localStorage.setItem('luma11y-copy-templates', JSON.stringify((this as any).templates));
     localStorage.setItem('luma11y-shortcuts', JSON.stringify((this as any).shortcuts));
@@ -223,13 +208,11 @@ Alpine.store('settings', {
     localStorage.setItem('luma11y-enabled-formats', JSON.stringify((this as any).enabledFormats));
     localStorage.setItem('luma11y-restore-colors', String((this as any).restoreColors));
 
-    // Persiste le thème, le style et la locale
     // Persist theme, style theme and locale
     setThemePreference((this as any).theme);
     setStyleTheme((this as any).styleTheme);
     setLocalePreference((this as any).preference, systemLocale);
 
-    // Synchronise avec le backend (menu natif)
     // Sync with backend (native menu)
     try {
       await Promise.all([
@@ -242,7 +225,6 @@ Alpine.store('settings', {
       console.error('Error syncing settings to backend:', error);
     }
 
-    // Notifie la fenêtre principale pour ré-enregistrer les hotkeys pickers
     // Notify main window to re-register picker hotkeys
     await emit('shortcuts-changed');
 
@@ -250,9 +232,6 @@ Alpine.store('settings', {
     getCurrentWindow().close();
   },
 
-  // Annule les modifications : ferme simplement la fenêtre.
-  // Le contexte de Settings est détruit à la fermeture, et la prochaine
-  // ouverture re-lit localStorage (= valeurs sauvegardées).
   // Cancel changes: just close the window.
   // The Settings context is destroyed on close, and the next opening
   // re-reads localStorage (= saved values).
@@ -263,19 +242,15 @@ Alpine.store('settings', {
 });
 
 // =============================================================================
-// SYNCHRONISATION
 // SYNCHRONIZATION
 // =============================================================================
 
-// Quand la locale change, met à jour la locale réactive du store (pour t())
 // When locale changes, update the reactive locale on the store (used by t()).
 onLocaleChange((locale) => {
   const store = Alpine.store('settings') as any;
   store.locale = locale;
 });
 
-// Bloque le menu contextuel natif de la webview en build de production.
-// En dev (vite dev), on le laisse pour pouvoir ouvrir l'inspecteur via clic droit.
 // Block the webview's native context menu in production builds.
 // In dev (vite dev), we keep it so the inspector stays reachable via right-click.
 if (!import.meta.env.DEV) {
@@ -283,7 +258,6 @@ if (!import.meta.env.DEV) {
 }
 
 // =============================================================================
-// INITIALISATION
 // INITIALIZATION
 // =============================================================================
 
@@ -291,7 +265,6 @@ Alpine.start();
 initTheme();
 initStyleTheme();
 
-// Place le focus clavier sur la première tab, dès l'ouverture
 // Give keyboard focus to the first tab on opening
 requestAnimationFrame(() => {
   const firstTab = document.querySelector<HTMLElement>('[role=tab][data-tab=general]');
@@ -300,32 +273,29 @@ requestAnimationFrame(() => {
 });
 
 (async () => {
-  // Détecte la locale système / Detect system locale
+  // Detect system locale
   try {
     systemLocale = (await getSystemLocale()) ?? undefined;
   } catch (error) {
     console.error('Error detecting system locale:', error);
   }
 
-  // Initialise i18n / Initialize i18n
+  // Initialize i18n
   const detectedLocale = initLocale(systemLocale);
 
-  // Synchronise le store Alpine / Sync Alpine store
+  // Sync Alpine store
   const store = Alpine.store('settings') as any;
   store.locale = detectedLocale;
   store.preference = getLocalePreference();
 
-  // Écoute les changements de locale depuis le menu natif ou d'autres fenêtres
   // Listen for locale changes from native menu or other windows
   await listen<string>('locale-changed', (event) => {
     setLocale(event.payload);
-    // Relit la préférence car elle a pu être mise à jour par l'autre fenêtre
     // Re-read preference as it may have been updated by the other window
     const s = Alpine.store('settings') as any;
     s.preference = getLocalePreference();
   });
 
-  // Récupère les métadonnées de l'app pour l'onglet "À propos"
   // Fetch app metadata for the "About" tab
   try {
     const info = await invoke<{ name: string; version: string; authors: string; description: string }>('get_app_info');
@@ -334,13 +304,11 @@ requestAnimationFrame(() => {
     console.error('Error loading app info:', error);
   }
 
-  // Bascule vers l'onglet demandé quand la fenêtre est déjà ouverte
   // Switch to the requested tab when the window is already open
   await listen<string>('settings-navigate', (event) => {
     window.dispatchEvent(new CustomEvent('settings-navigate', { detail: event.payload }));
   });
 
-  // Onglet initial
   // Initial tab
   try {
     const initialTab = await invoke<string>('get_settings_initial_tab');

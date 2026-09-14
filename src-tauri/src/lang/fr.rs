@@ -1,9 +1,7 @@
 // =============================================================================
-// lang/fr.rs - Traductions françaises
 // lang/fr.rs - French translations
 // =============================================================================
 
-/// Retourne la traduction française d'une clé, ou None si inconnue
 /// Returns the French translation for a key, or None if unknown
 pub fn t(key: &str) -> Option<&'static str> {
     Some(match key {

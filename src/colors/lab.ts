@@ -1,13 +1,10 @@
 // =============================================================================
-// colors/lab.ts - Format CIE L*a*b* ("lab(l, a, b)")
 // colors/lab.ts - CIE L*a*b* format ("lab(l, a, b)")
 // =============================================================================
 
 import type { ColorFormat, ColorCommit } from './types';
 import { ALPHA_TAIL, alphaArgs } from './alpha';
 
-// Accepte "lab(l, a, b)" avec un alpha optionnel
-// L* tient dans 0-100 ; a* et b* peuvent être négatifs
 // Accepts "lab(l, a, b)" with an optional alpha
 // L* lies in 0-100; a* and b* may be negative
 const LAB_RE = new RegExp(
@@ -15,19 +12,15 @@ const LAB_RE = new RegExp(
   'i',
 );
 
-// L* tient dans 0-100 ; a* et b* dans environ -128..128 (gamut sRGB).
 // L* lies in 0-100; a* and b* in roughly -128..128 (sRGB gamut).
 const inL = (n: number) => n >= 0 && n <= 100;
 const inAB = (n: number) => n >= -128 && n <= 128;
 
-// Lab [l, a, b] → chaîne CSS lab(). Utilisé pour les dégradés des sliders.
 // Lab [l, a, b] → CSS lab() string. Used for the slider gradients.
 export function labToCss(v: number[]): string {
   return `lab(${v[0]} ${v[1]} ${v[2]})`;
 }
 
-// Le frontend extrait et valide l, a, b
-//
 // The frontend extracts and validates l, a, b
 export const labFormat: ColorFormat = {
   id: 'lab',
@@ -40,11 +33,9 @@ export const labFormat: ColorFormat = {
     const a = parseInt(match[2], 10);
     const b = parseInt(match[3], 10);
 
-    // Rejette toute composante hors intervalle (L 0-100, a/b -128..128).
     // Reject any component out of range (L 0-100, a/b -128..128).
     if (!inL(l) || !inAB(a) || !inAB(b)) return null;
 
-    // Alpha optionnel (virgule ou slash)
     // Optional alpha (comma or slash)
     const alpha = alphaArgs(match[4]);
     if (alpha === null) return null;

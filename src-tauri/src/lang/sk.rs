@@ -1,9 +1,7 @@
 // =============================================================================
-// lang/sk.rs - Traductions slovaques
 // lang/sk.rs - Slovak translations
 // =============================================================================
 
-/// Retourne la traduction slovaque d'une clé, ou None si inconnue
 /// Returns the Slovak translation for a key, or None if unknown
 pub fn t(key: &str) -> Option<&'static str> {
     Some(match key {
