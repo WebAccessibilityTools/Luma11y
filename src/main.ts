@@ -341,6 +341,7 @@ onThemeChange((theme) => {
 
 const RESTORE_COLORS_KEY = 'luma11y-restore-colors';
 const LAST_COLORS_KEY = 'luma11y-last-colors';
+const ALWAYS_ON_TOP_KEY = 'luma11y-always-on-top';
 
 interface LastColors {
   fg: [number, number, number];
@@ -398,6 +399,25 @@ async function restoreLastColors(): Promise<void> {
     await invoke('update_store_rgb', { key: 'foreground', r: data.fg[0], g: data.fg[1], b: data.fg[2], alpha: data.fgAlpha ?? 1 });
   } catch (err) {
     console.error('Error restoring last colours:', err);
+  }
+}
+
+// Remembers the current always-on-top state
+function saveLastAlwaysOnTop(value: boolean): void {
+  try {
+    localStorage.setItem(ALWAYS_ON_TOP_KEY, String(value));
+  } catch (err) {
+    console.error('Error saving always-on-top state:', err);
+  }
+}
+
+// Re-applies the always-on-top state from the last session
+async function restoreLastAlwaysOnTop(): Promise<void> {
+  if (localStorage.getItem(ALWAYS_ON_TOP_KEY) !== 'true') return;
+  try {
+    await invoke('set_always_on_top', { value: true });
+  } catch (err) {
+    console.error('Error restoring always-on-top state:', err);
   }
 }
 
@@ -521,6 +541,12 @@ async function restoreLastColors(): Promise<void> {
   // Step 2b: Restore the last colour combination if the option is enabled
   await restoreLastColors();
   persistColorsReady = true;
+
+  // Step 2c: Remember every always-on-top change and restore the last state
+  await listen<boolean>('always-on-top-changed', (event) => {
+    saveLastAlwaysOnTop(event.payload);
+  });
+  await restoreLastAlwaysOnTop();
 
   // Étape 3 : Écoute les changements de profil ICC depuis le menu
   // Step 3: Listen for ICC profile changes from the menu
