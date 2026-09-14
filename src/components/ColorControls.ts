@@ -168,8 +168,27 @@ export class ColorControls extends LitElement {
   // Current opacity ∈ [0,1], driven by the store. Source of the alpha channel (× 100).
   @property({ type: Number }) alpha = 1;
 
-  // Mode d'affichage des sliders / Slider display mode
+  // Colour this instance edits ("foreground" / "background"), used to persist its slider mode.
+  @property({ type: String, attribute: 'color-key' }) colorKey = '';
+
+  // Slider display mode (raw user choice; see effectiveMode for the fallback)
   @state() private sliderMode: SliderMode = 'standard';
+
+  // localStorage key holding this instance's slider mode
+  private get sliderModeKey(): string {
+    return `luma11y-slider-mode-${this.colorKey}`;
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    const saved = localStorage.getItem(this.sliderModeKey);
+    if (saved && saved in SLIDER_MODE_LABELS) this.sliderMode = saved as SliderMode;
+  }
+
+  private setSliderMode(mode: SliderMode) {
+    this.sliderMode = mode;
+    localStorage.setItem(this.sliderModeKey, mode);
+  }
 
   // Pendant le drag d'un slider, on fige les valeurs des canaux localement : les
   // sliders suivent cet état au lieu de la réponse du backend pour éviter le "drift" des autres canaux.
@@ -550,11 +569,10 @@ export class ColorControls extends LitElement {
       ${this.availableModes.length > 1 ? html`
         <select
           aria-label="${t('color.slider_mode')}"
-          .value="${this.effectiveMode}"
-          @change="${(e: Event) => this.sliderMode = (e.target as HTMLSelectElement).value as SliderMode}"
+          @change="${(e: Event) => this.setSliderMode((e.target as HTMLSelectElement).value as SliderMode)}"
         >
           ${this.availableModes.map((m) => html`
-            <option value="${m}">${t(SLIDER_MODE_LABELS[m])}</option>
+            <option value="${m}" .selected="${m === this.effectiveMode}">${t(SLIDER_MODE_LABELS[m])}</option>
           `)}
         </select>
       ` : ''}

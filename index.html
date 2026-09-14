@@ -95,6 +95,7 @@
         <!-- Foreground Color controls -->
         <color-controls
           x-show="showFgControls" x-transition
+          color-key="foreground"
           allow-alpha
           x-bind:alpha="$store.uiStore.foregroundAlpha"
           x-bind:rgb="$store.uiStore.foregroundRgb"
@@ -171,6 +172,7 @@
         <!-- Background Color controls -->
         <color-controls
           x-show="showBgControls" x-transition
+          color-key="background"
           x-bind:rgb="$store.uiStore.backgroundRgb"
           x-bind:formats="JSON.stringify($store.uiStore.backgroundFormats)"
           x-bind:selected-format="$store.uiStore.backgroundFormat"
