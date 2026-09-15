@@ -58,14 +58,15 @@ jobs:
           libssl-dev \
           patchelf \
           build-essential \
-          file \
-          xdg-utils
+          file
 
     - name: Install frontend dependencies
       run: pnpm install
 
     # https://github.com/tauri-apps/tauri-action
+    # macOS / Windows: build, bundle and upload to the draft release.
     - uses: tauri-apps/tauri-action@v0
+      if: "!startsWith(matrix.platform, 'ubuntu')"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -78,15 +79,32 @@ jobs:
         updaterJsonPreferNsis: true
         args: ${{ matrix.args }}
 
-    # Also publish the bundles as workflow artifacts (Actions tab), even when a
-    # later bundle step fails: the draft release only receives assets from jobs
-    # that fully succeed.
-    - name: Upload release artifacts
-      if: always()
+    # Linux: executable only (frontend embedded), no deb/rpm/AppImage. Published
+    # as a workflow artifact (Actions tab), not on the release.
+    - name: Build (Linux, no bundle)
+      if: startsWith(matrix.platform, 'ubuntu')
+      run: pnpm tauri build --no-bundle
+
+    # Also publish the installers as workflow artifacts (Actions tab), even when
+    # the release upload fails. Only the final installers: the bundle directories
+    # also hold the unpacked trees (.app, staging).
+    - name: Upload artifacts (macOS / Windows)
+      if: always() && !startsWith(matrix.platform, 'ubuntu')
       uses: actions/upload-artifact@v4
       with:
-        name: release-${{ matrix.platform }}${{ matrix.args && '-' || '' }}${{ contains(matrix.args, 'aarch64') && 'aarch64' || contains(matrix.args, 'x86_64') && 'x86_64' || '' }}
+        name: release-${{ matrix.platform }}${{ contains(matrix.args, 'aarch64') && '-aarch64' || contains(matrix.args, 'x86_64') && '-x86_64' || '' }}
         if-no-files-found: warn
         path: |
-          src-tauri/target/release/bundle/**
-          src-tauri/target/*/release/bundle/**
+          src-tauri/target/release/bundle/msi/*.msi
+          src-tauri/target/release/bundle/nsis/*.exe
+          src-tauri/target/*/release/bundle/dmg/*.dmg
+
+    # Note: artifact zips do not keep the executable bit, so run
+    # `chmod +x luma11y` after extracting.
+    - name: Upload artifact (Linux executable)
+      if: startsWith(matrix.platform, 'ubuntu')
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-${{ runner.arch }}-bin
+        if-no-files-found: error
+        path: src-tauri/target/release/luma11y
