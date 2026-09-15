@@ -19,6 +19,7 @@ export default defineConfig(async () => ({
         settings: resolve(__dirname, 'settings.html'),
         'style-chooser': resolve(__dirname, 'style-chooser.html'),
         permission: resolve(__dirname, 'permission.html'),
+        wayland: resolve(__dirname, 'wayland.html'),
       },
     },
   },

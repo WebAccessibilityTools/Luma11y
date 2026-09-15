@@ -536,6 +536,28 @@ fn set_locale(app: tauri::AppHandle, state: tauri::State<store::AppState>, local
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+/// Under Wayland: the X11 picker cannot capture the screen.
+/// The main window, created hidden, is destroyed before its webview shows
+/// it. Closing the page quits the application (see `on_window_event`).
+#[cfg(target_os = "linux")]
+fn open_wayland_window(app: &tauri::AppHandle) -> tauri::Result<()> {
+    WebviewWindowBuilder::new(app, "wayland", WebviewUrl::App("wayland.html".into()))
+        .title("Wayland is not supported yet")
+        .inner_size(480.0, 260.0)
+        .resizable(false)
+        .maximizable(false)
+        .minimizable(false)
+        .center()
+        .decorations(false)
+        .transparent(true)
+        .build()?;
+    if let Some(main) = app.get_webview_window("main") {
+        main.destroy()?;
+    }
+    eprintln!("Luma11y: Wayland session detected, the X11 color picker cannot run.");
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
         // Initialize OS plugin for locale detection
@@ -558,6 +580,13 @@ pub fn run() {
         .setup(|app| {
             // Get the application handle
             let handle = app.handle();
+
+            // Under Wayland: explanation page instead of the application
+            #[cfg(target_os = "linux")]
+            if picker::linux_x11::is_wayland_session() {
+                open_wayland_window(handle)?;
+                return Ok(());
+            }
 
             // Build initial menu with default locale
             rebuild_menu(handle, "en")?;
@@ -727,6 +756,16 @@ pub fn run() {
             permissions::open_screen_recording_settings,
         ])
         // Run the Tauri application
+        // The "Wayland not supported" window is the only one open in that case:
+        // closing it quits the application with an error status.
+        .on_window_event(|window, event| {
+            #[cfg(target_os = "linux")]
+            if window.label() == "wayland" && matches!(event, tauri::WindowEvent::Destroyed) {
+                std::process::exit(1);
+            }
+            #[cfg(not(target_os = "linux"))]
+            let _ = (window, event);
+        })
         .run(tauri::generate_context!())
         // Display error message if launch fails
         .expect("error while running tauri application");

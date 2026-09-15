@@ -15,46 +15,50 @@ jobs:
             args: '--target aarch64-apple-darwin'
           - platform: 'macos-latest' # for Intel based macs
             args: '--target x86_64-apple-darwin'
-#          - platform: 'ubuntu-22.04' # for Tauri v2
-#            args: ''
+          # Oldest supported LTS on purpose: the binary links against this
+          # runner's glibc, so an older base = wider distro compatibility.
+          - platform: 'ubuntu-22.04'      # Linux x86_64
+            args: ''
+          - platform: 'ubuntu-22.04-arm'  # Linux ARM64
+            args: ''
           - platform: 'windows-latest'
             args: ''
 
     runs-on: ${{ matrix.platform }}
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: 'lts/*'
-        
+
     - name: Install Pnpm
       uses: pnpm/action-setup@v4
       with:
         version: 10
-        
+
     - name: Install Rust stable
       uses: dtolnay/rust-toolchain@stable
       with:
         # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
         targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-        
-    
-#    - name: Install dependencies (ubuntu only)
-#      if: matrix.platform == 'ubuntu-22.04'
-#      run: |
-#        sudo apt-get update
-#        sudo apt-get install -y \
-#          libwebkit2gtk-4.1-dev \
-#          libappindicator3-dev \
-#          librsvg2-dev \
-#          libgtk-4-dev \
-#          patchelf \
-#          openssl \
-#          libssl-dev \
-#          build-essential
+
+    - name: Install dependencies (ubuntu only)
+      if: startsWith(matrix.platform, 'ubuntu')
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libwebkit2gtk-4.1-dev \
+          libayatana-appindicator3-dev \
+          librsvg2-dev \
+          libcairo2-dev \
+          libxdo-dev \
+          libssl-dev \
+          patchelf \
+          build-essential \
+          file
 
     - name: Install frontend dependencies
       run: pnpm install

@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "settings", "style-chooser", "permission"],
+  "windows": ["main", "settings", "style-chooser", "permission", "wayland"],
   "permissions": [
     "core:default",
     "core:window:allow-set-size",

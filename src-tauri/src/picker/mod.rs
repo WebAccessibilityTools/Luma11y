@@ -13,9 +13,9 @@ pub mod macos;
 #[cfg(target_os = "windows")]
 pub mod windows;
 
-/// Linux implementation (not implemented)
+/// Linux implementation (X11 + Cairo)
 #[cfg(target_os = "linux")]
-pub mod linux;
+pub mod linux_x11;
 
 // =============================================================================
 // PUBLIC FUNCTION
@@ -41,7 +41,7 @@ pub fn run(fg: bool) -> common::ColorPickerResult {
 
     #[cfg(target_os = "linux")]
     {
-        linux::run(fg)
+        linux_x11::run(fg)
     }
 
     #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]

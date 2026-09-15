@@ -82,6 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
     resizeWindow();
   });
   observer.observe(document.body);
+
+  // The window is created hidden (tauri.conf.json `visible: false`): Show it once the first size adjustment is done.
+  resizeWindow()
+    .catch(() => {})
+    .finally(() => {
+      getCurrentWindow().show();
+    });
 });
 
 // Block the webview's native context menu in production builds.

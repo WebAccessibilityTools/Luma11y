@@ -96,3 +96,20 @@ windows = { version = "0.58", features = [
     # Input - Keyboard and Mouse
     "Win32_UI_Input_KeyboardAndMouse",
 ] }
+
+# =============================================================================
+# Linux dependencies
+# Dépendances Linux
+# =============================================================================
+[target.'cfg(target_os = "linux")'.dependencies]
+# X11 protocol bindings (pure Rust, no libX11 needed)
+# Bindings du protocole X11 (Rust pur, pas besoin de libX11)
+# Provides screen capture (GetImage), overlay window, input events
+# Fournit la capture d'écran (GetImage), la fenêtre overlay, les événements
+x11rb = "0.13"
+
+# Cairo 2D graphics for drawing the magnifier, arcs and text
+# Graphismes 2D Cairo pour dessiner la loupe, les arcs et le texte
+# Requires system libcairo (libcairo2-dev on Debian/Ubuntu)
+# Nécessite libcairo système (libcairo2-dev sur Debian/Ubuntu)
+cairo-rs = "0.20"

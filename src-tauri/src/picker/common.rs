@@ -2,7 +2,7 @@
 //! COMMON.RS - Shared code between platforms
 //! =============================================================================
 //!
-//! This module contains types and functions used by both macOS and Windows.
+//! This module contains types and functions used by macOS, Windows and Linux.
 
 use serde::Serialize;
 
