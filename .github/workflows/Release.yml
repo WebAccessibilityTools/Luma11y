@@ -78,8 +78,15 @@ jobs:
         updaterJsonPreferNsis: true
         args: ${{ matrix.args }}
 
-#    - name: Upload release artifacts
-#      uses: actions/upload-artifact@v4
-#      with:
-#        name: release-${{ matrix.platform }}
-#        path: src-tauri/target/release/bundle/**
+    # Also publish the bundles as workflow artifacts (Actions tab), even when a
+    # later bundle step fails: the draft release only receives assets from jobs
+    # that fully succeed.
+    - name: Upload release artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-${{ matrix.platform }}${{ matrix.args && '-' || '' }}${{ contains(matrix.args, 'aarch64') && 'aarch64' || contains(matrix.args, 'x86_64') && 'x86_64' || '' }}
+        if-no-files-found: warn
+        path: |
+          src-tauri/target/release/bundle/**
+          src-tauri/target/*/release/bundle/**
