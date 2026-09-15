@@ -58,7 +58,8 @@ jobs:
           libssl-dev \
           patchelf \
           build-essential \
-          file
+          file \
+          xdg-utils
 
     - name: Install frontend dependencies
       run: pnpm install
