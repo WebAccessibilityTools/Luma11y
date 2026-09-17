@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+  # Manual run from any branch (Actions tab)
+  workflow_dispatch:
 jobs:
   build:
     permissions:
