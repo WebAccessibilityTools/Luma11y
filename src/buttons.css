@@ -1,0 +1,48 @@
+/* =============================================================================
+   buttons.css - Shared text buttons (dialogs, settings footer, update dialog)
+   Icon buttons (.btn) stay in main.css. Theme tokens with a light fallback for
+   the small windows that do not load a theme stylesheet.
+   ============================================================================= */
+
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--background-color-inverted, var(--color-slate-900));
+  color: var(--text-color-inverted, var(--color-slate-100));
+  border-color: var(--border-color, var(--color-slate-900));
+}
+
+.btn-secondary {
+  background: var(--background-color, transparent);
+  color: var(--text-color, var(--color-slate-900));
+  border-color: var(--border-color, var(--color-slate-400));
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--background-color, var(--color-slate-100));
+  color: var(--text-color, var(--color-slate-900));
+  border-color: var(--text-color, var(--color-slate-900));
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--background-color-grey, var(--color-slate-200));
+  color: var(--text-color-strong, var(--color-slate-900));
+  border-color: var(--text-color, var(--color-slate-900));
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

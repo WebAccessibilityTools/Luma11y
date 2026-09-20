@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Settings</title>
     <link rel="stylesheet" href="/src/colors.css" />
-    <link rel="stylesheet" href="/src/common-style.css" />
+    <link rel="stylesheet" href="/src/buttons.css" />
+    <link rel="stylesheet" href="/src/dialog.css" />
     <link rel="stylesheet" href="/src/settings.css" />
   </head>
   <body x-data x-effect="
@@ -19,22 +20,23 @@
     </header>
     <main x-data="{
       activeTab: 'general',
-      tabs: ['general', 'shortcuts', 'templates'],
+      tabs: ['general', 'shortcuts', 'templates', 'update', 'about'],
       focusTab(id) { this.$root.querySelector(`[role=tab][data-tab=${id}]`)?.focus(); },
       prevTab() { const i = this.tabs.indexOf(this.activeTab); this.activeTab = this.tabs[(i - 1 + this.tabs.length) % this.tabs.length]; this.$nextTick(() => this.focusTab(this.activeTab)); },
       nextTab() { const i = this.tabs.indexOf(this.activeTab); this.activeTab = this.tabs[(i + 1) % this.tabs.length]; this.$nextTick(() => this.focusTab(this.activeTab)); }
-    }">
+    }"
+    @settings-navigate.window="if (tabs.includes($event.detail)) { activeTab = $event.detail; $nextTick(() => focusTab(activeTab)); }">
 
-      <!-- Onglets / Tabs -->
-      <div class="tabs" role="tablist">
+      <!-- Tabs -->
+      <div class="tabs" role="tablist" aria-orientation="vertical">
         <button role="tab" data-tab="general"
           id="tab-general" aria-controls="panel-general"
           :aria-selected="activeTab === 'general'"
           :tabindex="activeTab === 'general' ? 0 : -1"
           :class="{ active: activeTab === 'general' }"
           @click="activeTab = 'general'"
-          @keydown.arrow-left.prevent="prevTab()"
-          @keydown.arrow-right.prevent="nextTab()"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
           x-text="$store.settings.t('settings.tab_general')">General</button>
         <button role="tab" data-tab="shortcuts"
           id="tab-shortcuts" aria-controls="panel-shortcuts"
@@ -42,8 +44,8 @@
           :tabindex="activeTab === 'shortcuts' ? 0 : -1"
           :class="{ active: activeTab === 'shortcuts' }"
           @click="activeTab = 'shortcuts'"
-          @keydown.arrow-left.prevent="prevTab()"
-          @keydown.arrow-right.prevent="nextTab()"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
           x-text="$store.settings.t('settings.tab_shortcuts')">Shortcuts</button>
         <button role="tab" data-tab="templates"
           id="tab-templates" aria-controls="panel-templates"
@@ -51,15 +53,36 @@
           :tabindex="activeTab === 'templates' ? 0 : -1"
           :class="{ active: activeTab === 'templates' }"
           @click="activeTab = 'templates'"
-          @keydown.arrow-left.prevent="prevTab()"
-          @keydown.arrow-right.prevent="nextTab()"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
           x-text="$store.settings.t('settings.tab_templates')">Copy templates</button>
+        <button role="tab" data-tab="update"
+          id="tab-update" aria-controls="panel-update"
+          :aria-selected="activeTab === 'update'"
+          :tabindex="activeTab === 'update' ? 0 : -1"
+          :class="{ active: activeTab === 'update' }"
+          @click="activeTab = 'update'"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
+          x-text="$store.settings.t('settings.tab_update')">Updates</button>
+        <button role="tab" data-tab="about"
+          id="tab-about" aria-controls="panel-about"
+          :aria-selected="activeTab === 'about'"
+          :tabindex="activeTab === 'about' ? 0 : -1"
+          :class="{ active: activeTab === 'about' }"
+          @click="activeTab = 'about'"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
+          x-text="$store.settings.t('settings.tab_about')">About</button>
       </div>
 
-      <!-- Tab : Général / General -->
+      <!-- Tab content -->
+      <div class="tab-content">
+
+      <!-- Tab : General -->
       <div role="tabpanel" id="panel-general" aria-labelledby="tab-general" x-show="activeTab === 'general'" class="tab-panel">
 
-        <!-- Langue / Language -->
+        <!-- Language -->
         <div class="section">
           <label for="settings-language" class="section-label" x-text="$store.settings.t('settings.language')">Language</label>
           <div class="field">
@@ -74,7 +97,7 @@
           </div>
         </div>
 
-        <!-- Thème / Theme -->
+        <!-- Theme -->
         <div class="section">
           <label for="settings-theme" class="section-label" x-text="$store.settings.t('settings.theme')">Theme</label>
           <div class="field">
@@ -88,7 +111,7 @@
           </div>
         </div>
 
-        <!-- Thème de style / Style theme -->
+        <!-- Style theme -->
         <div class="section">
           <label for="settings-style-theme" class="section-label" x-text="$store.settings.t('settings.style_theme')">Style</label>
           <div class="field">
@@ -101,7 +124,7 @@
           </div>
         </div>
 
-        <!-- Toast / Notification -->
+        <!-- Notification -->
         <div class="section">
           <label for="settings-toast-duration" class="section-label" x-text="$store.settings.t('settings.toast_duration')">Toast duration</label>
           <div class="field">
@@ -113,7 +136,19 @@
           </div>
         </div>
 
-        <!-- Formats de couleur / Color formats -->
+        <!-- Restore colours on startup -->
+        <div class="section">
+          <label class="format-toggle">
+            <input type="checkbox"
+              :checked="$store.settings.restoreColors"
+              @change="$store.settings.restoreColors = $event.target.checked" 
+              aria-describedby="settings-restore-colors-help" />
+            <span x-text="$store.settings.t('settings.restore_colors')">Restore last colours on startup</span>
+          </label>
+          <p id="settings-restore-colors-help" class="field-suffix" x-text="$store.settings.t('settings.restore_colors_help')"></p>
+        </div>
+
+        <!-- Color formats -->
         <fieldset class="section">
           <legend class="section-label" id="settings-formats-label" x-text="$store.settings.t('settings.color_formats')">Color formats</legend>
           <p class="field-suffix" x-text="$store.settings.t('settings.color_formats_help')"></p>
@@ -131,15 +166,12 @@
 
       </div>
 
-      <!-- Tab : Raccourcis / Shortcuts -->
+      <!-- Tab : Shortcuts -->
       <div role="tabpanel" id="panel-shortcuts" aria-labelledby="tab-shortcuts" x-show="activeTab === 'shortcuts'" class="tab-panel">
 
         <fieldset class="section">
           <legend :id="sc.id" class="section-label" x-text="$store.settings.t('settings.shortcuts')">Keyboard shortcuts</legend>
           <!--
-            Capture de raccourci : clic/Entrée/Espace pour entrer en mode "recording",
-            puis la prochaine touche non-modificatrice est enregistrée comme raccourci.
-            Échap annule l'enregistrement sans fermer la fenêtre.
             Shortcut capture: click/Enter/Space to enter "recording" mode, then the next
             non-modifier key is saved as the shortcut. Escape cancels recording without
             closing the window.
@@ -165,7 +197,7 @@
 
       </div>
 
-      <!-- Tab : Modèles de copie / Copy templates -->
+      <!-- Tab : Copy templates -->
       <div role="tabpanel" id="panel-templates" aria-labelledby="tab-templates" x-show="activeTab === 'templates'" class="tab-panel">
         <details class="tag-help">
           <summary x-text="$store.settings.t('settings.tag_help_title')">Available tags</summary>
@@ -215,8 +247,6 @@
                 ></textarea>
               </div>
               <!--
-                Même logique que la capture de raccourci global ci-dessus, mais pour le
-                raccourci de copie d'un modèle.
                 Same logic as the global shortcut capture above, but for a template's copy
                 shortcut.
               -->
@@ -239,12 +269,101 @@
         </div>
         <button class="btn-add" @click="$store.settings.addTemplate()"><span aria-hidden="true">+</span> <span x-text="$store.settings.t('settings.add_template')">Add</span></button>
       </div>
+
+      <!-- Tab : Update -->
+      <div role="tabpanel" id="panel-update" aria-labelledby="tab-update" x-show="activeTab === 'update'" class="tab-panel"
+           x-effect="activeTab === 'update' && $store.settings.updateState === 'idle' && $store.settings.checkUpdate()">
+        <div class="section">
+          <label class="format-toggle">
+            <input type="checkbox"
+              :checked="$store.settings.autoUpdate"
+              @change="$store.settings.autoUpdate = $event.target.checked" />
+            <span x-text="$store.settings.t('settings.update_auto')">Check for updates automatically</span>
+          </label>
+        </div>
+        <div class="section">
+          <p class="update-status" role="status" aria-live="polite" x-text="$store.settings.updateStatusText()"></p>
+          <div class="update-notes" x-show="$store.settings.updateState === 'available' && $store.settings.update?.body"
+               x-html="$store.settings.updateNotesHtml()"></div>
+          <div class="update-actions">
+            <button type="button" class="btn-secondary" x-show="$store.settings.updateState !== 'available'"
+              :disabled="$store.settings.updateState === 'checking'"
+              @click="$store.settings.checkUpdate()"
+              x-text="$store.settings.t('settings.update_check')">Check now</button>
+            <button type="button" class="btn-primary" x-show="$store.settings.updateState === 'available'"
+              :disabled="$store.settings.updateState === 'installing'"
+              @click="$store.settings.installUpdate()"
+              x-text="$store.settings.t($store.settings.updateState === 'installing' ? 'settings.update_installing' : 'settings.update_install')">Update and restart</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab : About -->
+      <div role="tabpanel" id="panel-about" aria-labelledby="tab-about" x-show="activeTab === 'about'" class="tab-panel">
+        <div class="about">
+          <h1 class="about-name" x-text="$store.settings.appInfo.name">Luma11y</h1>
+          <p class="about-version" x-text="$store.settings.t('settings.about_version', $store.settings.appInfo.version)">Version</p>
+          <p class="about-description" x-text="$store.settings.t('settings.about_tagline')"></p>
+
+          <dl class="about-meta">
+            <dt x-text="$store.settings.t('settings.about_author')">Author</dt>
+            <dd x-text="$store.settings.appInfo.authors"></dd>
+            <dt x-text="$store.settings.t('settings.about_license')">License</dt>
+            <dd>GPL-3.0</dd>
+          </dl>
+
+          <div class="about-links">
+            <a class="about-link"
+              href="https://github.com/WebAccessibilityTools/Luma11y"
+              @click.prevent="$store.settings.openExternal('https://github.com/WebAccessibilityTools/Luma11y')">
+              <svg-icon name="github" size="1.1em"></svg-icon>
+              <span x-text="$store.settings.t('settings.about_repository')">View on GitHub</span>
+            </a>
+            <a class="about-link"
+              href="https://github.com/WebAccessibilityTools/Luma11y/issues/new"
+              @click.prevent="$store.settings.openExternal('https://github.com/WebAccessibilityTools/Luma11y/issues/new')">
+              <svg-icon name="bug" size="1.1em"></svg-icon>
+              <span x-text="$store.settings.t('settings.about_report_bug')">Report a bug</span>
+            </a>
+          </div>
+
+          <section class="about-support">
+            <h2 x-text="$store.settings.t('settings.about_support_title')">Support this project</h2>
+            <p x-text="$store.settings.t('settings.about_support')"></p>
+            <div class="about-links">
+              <a class="about-link"
+                href="https://github.com/sponsors/WebAccessibilityTools"
+                @click.prevent="$store.settings.openExternal('https://github.com/sponsors/WebAccessibilityTools')">
+                <svg-icon name="heart" size="1.1em"></svg-icon>
+                <span x-text="$store.settings.t('settings.about_sponsor')">Sponsor</span>
+              </a>
+              <a class="about-link"
+                href="https://www.buymeacoffee.com/ctrevisan"
+                @click.prevent="$store.settings.openExternal('https://www.buymeacoffee.com/ctrevisan')">
+                <svg-icon name="coffee" size="1.1em"></svg-icon>
+                <span x-text="$store.settings.t('settings.about_coffee')">Buy me a coffee</span>
+              </a>
+            </div>
+          </section>
+
+          <section class="about-credits" x-show="$store.settings.translators.length">
+            <h2 x-text="$store.settings.t('settings.about_translators')">Translations</h2>
+            <ul class="credit-list">
+              <template x-for="tr in $store.settings.translators" :key="tr.language">
+                <li><strong x-text="tr.language"></strong> — <span x-text="tr.names"></span></li>
+              </template>
+            </ul>
+          </section>
+        </div>
+      </div>
+
+      </div><!-- /.tab-content -->
     </main>
 
-    <!-- Barre d'actions fixe / Fixed action bar -->
+    <!-- Fixed action bar -->
     <div class="actions">
-      <button class="btn-cancel" @click="$store.settings.cancel()" x-text="$store.settings.t('settings.cancel')">Cancel</button>
-      <button class="btn-save" @click="$store.settings.save()" x-text="$store.settings.t('settings.save')">Save</button>
+      <button class="btn-secondary" @click="$store.settings.cancel()" x-text="$store.settings.t('settings.cancel')">Cancel</button>
+      <button class="btn-primary" @click="$store.settings.save()" x-text="$store.settings.t('settings.save')">Save</button>
     </div>
 
     <script type="module" src="/src/settings.ts"></script>

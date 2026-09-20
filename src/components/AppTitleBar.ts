@@ -48,9 +48,7 @@ export class AppTitleBar extends LitElement {
       gap: 0.375rem;
     }
 
-    /* Ajoute l'icone de l'app dans la barre
-      Add the app icon into the bar
-    */
+    /* Add the app icon into the bar */
     .app-icon {
       height: 1rem;
       width: 1rem;
@@ -111,7 +109,6 @@ export class AppTitleBar extends LitElement {
   `;
 
   private isInteractive(e: MouseEvent): boolean {
-    // Utilise composedPath() pour traverser le Shadow DOM
     // Use composedPath() to crosses Shadow DOM
     return e.composedPath().some(
       (el) => el instanceof Element && el.matches(NO_DRAG_SELECTOR)

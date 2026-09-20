@@ -1,7 +1,13 @@
 {
   "app": {
     "title": "Luma11y",
-    "skip_navigation": "Skip navigation"
+    "skip_navigation": "Skip navigation",
+    "update_title": "A new version of Luma11y is available ({0})",
+    "update_body": "Open the Updates tab in the settings to install it.",
+    "update_later": "Later",
+    "update_view": "View",
+    "update_view_label": "View the Updates tab",
+    "update_later_label": "Later, and close the dialog"
   },
   "color": {
     "foreground": "Foreground",
@@ -54,6 +60,18 @@
     "title": "Settings",
     "tab_general": "General",
     "tab_templates": "Copy templates",
+    "tab_about": "About",
+    "about_version": "Version {0}",
+    "about_tagline": "Determine the legibility of text and the contrast of visual elements, such as graphical controls and visual indicators.",
+    "about_author": "Author",
+    "about_license": "License",
+    "about_repository": "View on GitHub",
+    "about_report_bug": "Report a bug",
+    "about_translators": "Translations",
+    "about_support_title": "Support this project",
+    "about_support": "This project is built entirely on my own free time, driven by the belief that accessibility tooling should be open and available to everyone. To keep it trustworthy and easy to install, I need code signing certificates for both Windows and macOS — which come with a real annual cost. If this tool saves you time or helps your team ship more accessible products, consider sponsoring it. Even a small contribution goes a long way toward keeping it signed, maintained, and free.",
+    "about_sponsor": "Sponsor on GitHub",
+    "about_coffee": "Buy Me a Coffee",
     "language": "Language",
     "auto": "Automatic (system)",
     "add_template": "Add template",
@@ -62,7 +80,7 @@
     "template_content": "Content",
     "template_name": "Name",
     "copy_shortcut": "Shortcut",
-    "press_keys": "Press keys\u2026",
+    "press_keys": "Press keys…",
     "no_shortcut": "Click to set",
     "theme": "Theme",
     "theme_light": "Light",
@@ -73,6 +91,8 @@
     "toast_duration": "Toast duration",
     "toast_manual": "Manual close",
     "toast_seconds": "Seconds",
+    "restore_colors": "Restore last colours on startup",
+    "restore_colors_help": "Reopen the app with the foreground and background colours from your last session.",
     "color_formats": "Colour formats",
     "color_formats_help": "Choose which formats are available in the interface",
     "tab_shortcuts": "Shortcuts",
@@ -97,7 +117,16 @@
     "tag_1_4_3": "1.4.3 Contrast (Minimum) result",
     "tag_1_4_6": "1.4.6 Contrast (Enhanced) result",
     "tag_1_4_11": "1.4.11 Non-text Contrast result",
-    "default_template_name": "Short"
+    "default_template_name": "Short",
+    "tab_update": "Updates",
+    "update_auto": "Check for updates automatically at startup",
+    "update_checking": "Checking…",
+    "update_none": "Luma11y is up to date.",
+    "update_available": "Version {0} is available.",
+    "update_error": "Could not check for updates: {0}",
+    "update_check": "Check now",
+    "update_install": "Update and restart",
+    "update_installing": "Installing…"
   },
   "style_chooser": {
     "title": "Choose a style",
@@ -111,5 +140,12 @@
     "always_on_top": "Always on top",
     "appearance": "Appearance",
     "appearance_auto": "Auto"
+  },
+  "permissions": {
+    "screen_recording_title": "Screen Recording permission required",
+    "screen_recording_message": "Luma11y needs the “Screen & System Audio Recording” permission to read the colour of pixels under your cursor. Without it, the colour picker cannot capture the screen.",
+    "screen_recording_instructions": "Open System Settings, enable Luma11y under “Screen & System Audio Recording”, then restart the app.",
+    "open_settings": "Open System Settings",
+    "close": "Continue anyway"
   }
 }

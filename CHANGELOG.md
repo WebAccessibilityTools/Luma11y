@@ -1,3 +1,26 @@
+## [0.2.0] - 2026-09-11
+
+### 🚀 Features
+
+- *(colors)*: Added HSL, HSV, Lab, Oklch formats
+- *(alpha)* Add alpha channel support for foreground
+- *(MacOS)* Added permission dialog
+- *(settings)* Redesign dialog with vertical tabs (Closes #43)
+- Re-apply last used color on re-open (Closes #45)
+- *(i18n)* Adding Slovak language support to Luma11y (#54)
+
+### 🐛 Bug Fixes
+
+- *(a11y)* Color contrast on shortcut selector (Fixes #47)
+- *(a11y)*: Button focus ring contrast (Fixes #44)
+- *(color)* Place color css name above value
+- Implement full wcag algo using the **rounded** luminance coefficients (closes #51)
+- Background section text color contrast (closes #52)
+
+### 📚 Documentation
+
+- Add translator list
+
 ## [0.1.9] - 2026-06-02
 
 ### Features

@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Luma11y",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "identifier": "com.luma11y.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -21,7 +21,8 @@
         "maximizable": false,
         "center": true,
         "titleBarStyle": "Overlay",
-        "hiddenTitle": true
+        "hiddenTitle": true,
+        "visible": false
       }
     ],
     "security": {
@@ -42,6 +43,15 @@
       "signingIdentity": "-",
       "hardenedRuntime": true,
       "minimumSystemVersion": "10.13"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/WebAccessibilityTools/Luma11y/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEMyQzFEQ0Y2MkE4NTA2QjMKUldTekJvVXE5dHpCd3ZQVW1TZks4Lzk0UmxlU1Vzck1HL1l5cGV0YS84dXlwQUZWaHR3NmZmYnMK"
     }
   }
 }

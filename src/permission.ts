@@ -1,11 +1,12 @@
 // =============================================================================
-// style-chooser.ts - Style chooser window entry point
+// permission.ts - Permission window entry point
 //
-// Shown on first launch if no style has been chosen yet.
+// Shown at launch (macOS) if the app lacks the screen recording authorization
+// required by the color picker to read pixels.
 // =============================================================================
 
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { emit } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import Alpine from 'alpinejs';
 import { locale as getSystemLocale } from '@tauri-apps/plugin-os';
 import { initLocale, t as i18nT } from './i18n';
@@ -16,7 +17,7 @@ import './components/AppTitleBar';
 // STORE ALPINE
 // =============================================================================
 
-Alpine.store('chooser', {
+Alpine.store('perm', {
   locale: 'en',
 
   // Reactive translation
@@ -25,10 +26,18 @@ Alpine.store('chooser', {
     return i18nT(key);
   },
 
-  // Select a style, save and close the window
-  async choose(style: 'modern' | 'classic'): Promise<void> {
-    localStorage.setItem('luma11y-style-theme', style);
-    await emit('style-chosen', style);
+  // Triggers the system request then opens the correct System Settings pane.
+  async openSettings(): Promise<void> {
+    try {
+      await invoke('request_screen_recording_permission');
+      await invoke('open_screen_recording_settings');
+    } catch (err) {
+      console.error('Error opening screen recording settings:', err);
+    }
+  },
+
+  // Close the window
+  close(): void {
     getCurrentWindow().close();
   },
 });
@@ -38,7 +47,6 @@ Alpine.store('chooser', {
 // =============================================================================
 
 // Block the webview's native context menu in production builds.
-// In dev (vite dev), we keep it so the inspector stays reachable via right-click.
 if (!import.meta.env.DEV) {
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 }
@@ -54,6 +62,6 @@ initTheme();
   } catch {}
 
   const detectedLocale = initLocale(systemLocale);
-  const store = Alpine.store('chooser') as any;
+  const store = Alpine.store('perm') as any;
   store.locale = detectedLocale;
 })();

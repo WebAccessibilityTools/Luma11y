@@ -44,33 +44,10 @@ Or, if you prefer, buy me some coffe for further improve this tool even more.
 
 ## Table of Contents
 
-- [Features](#features)
 - [Installation (macOS)](#installation-macos)
 - [Contributing](#contributing)
 - [Contact](#contact)
 - [License](#license)
-
-## Features
-
-### For Beta 2
-
-| Feature | Status |
-|---|:---:|
-| Accessibility | In progress |
-| Alpha colour component | Planned |
-| New colour formats | done |
-| Free text entry | Done |
-| Windows/macOS installer | Planned |
-| Auto-update | Planned |
-| Signed certificates | Planned |
-
-### Future
-
-| Feature | Status |
-|---|:---:|
-| Linux version | Planned |
-| Reduced/menubar mode | Planned |
-| Colour blindness simulator | Planned |
 
 ## Installation (macOS)
 

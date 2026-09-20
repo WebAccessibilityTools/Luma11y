@@ -1,5 +1,4 @@
 /* =============================================================================
-   modern.css - Styles modern pour Luma11y
    modern.css - Modern styles for Luma11y
    ============================================================================= */
 
@@ -59,7 +58,6 @@
 
 }
 
-/* Styles du corps de la page - centrage vertical et horizontal */
 /* Body styles - vertical and horizontal centering */
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -93,7 +91,6 @@ body {
 }
 
 /* -----------------------------------------------------------------------------
-   ZONE DE RÉSULTATS
    RESULTS AREA
    ----------------------------------------------------------------------------- */
 

@@ -1,9 +1,7 @@
 // =============================================================================
-// lib.rs - Backend Tauri avec store réactif
 // lib.rs - Tauri backend with reactive store
 // =============================================================================
 
-// Import de Mutex pour la synchronisation thread-safe
 // Import Mutex for thread-safe synchronization
 use std::sync::Mutex;
 use tauri::Manager;
@@ -14,189 +12,148 @@ use tauri::WebviewUrl;
 // MODULES
 // =============================================================================
 
-/// Configuration partagée (constantes)
 /// Shared configuration (constants)
 mod config;
 
-/// Module du color picker (code commun et implémentations par plateforme)
 /// Color picker module (common code and platform implementations)
 mod picker;
 
-/// Gestion du store et des commandes associées
 /// Store management and associated commands
 mod store;
 
-/// Fonctions de manipulation de couleurs
 /// Color manipulation functions
 mod color;
 
-/// Noms de couleurs CSS (W3C CSS Color Module Level 4)
+/// WCAG 2.2 contrast ratio
+mod wcag_contrast;
+
 /// CSS named colors (W3C CSS Color Module Level 4)
 mod color_names;
 
-/// Gestion des profils ICC
 /// ICC profile management
 mod icc;
 
-/// Internationalisation des menus
 /// Menu internationalization
 mod i18n;
 
-/// Tables de traduction par langue
 /// Per-language translation tables
 mod lang;
 
+/// System permission checks (macOS screen capture)
+mod permissions;
+
 // =============================================================================
-// INITIALISATION
 // INITIALIZATION
 // =============================================================================
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
-// Import pour le système de menu
 // Import for the menu system
-use tauri::menu::{CheckMenuItemBuilder, Menu, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder, AboutMetadata};
+use tauri::menu::{CheckMenuItemBuilder, Menu, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder};
 
-// Import pour l'émission d'événements
 // Import for event emission
 use tauri::Emitter;
 
-/// Préfixe utilisé pour les IDs des éléments de menu ICC
 /// Prefix used for ICC menu item IDs
 const ICC_MENU_PREFIX: &str = "icc_profile_";
 
-/// Convertit un nom de profil en ID de menu
 /// Converts a profile name to a menu ID
 ///
 /// # Arguments
-/// * `name` - Nom du profil ICC / ICC profile name
+/// * `name` - ICC profile name
 ///
 /// # Returns
-/// * ID de menu formaté / Formatted menu ID
+/// * Formatted menu ID
 fn profile_name_to_menu_id(name: &str) -> String {
-    // Concatène le préfixe avec le nom en minuscules et espaces remplacés par underscores
     // Concatenate prefix with lowercase name and spaces replaced by underscores
     format!("{}{}", ICC_MENU_PREFIX, name.to_lowercase().replace(' ', "_"))
 }
 
-/// Extrait le nom du profil depuis un ID de menu
 /// Extracts profile name from a menu ID
 ///
 /// # Arguments
-/// * `menu_id` - ID de l'élément de menu / Menu item ID
+/// * `menu_id` - Menu item ID
 ///
 /// # Returns
-/// * Option contenant le nom du profil si trouvé / Option containing profile name if found
+/// * Option containing profile name if found
 fn menu_id_to_profile_name(menu_id: &str) -> Option<String> {
-    // Vérifie si l'ID commence par le préfixe ICC
     // Check if ID starts with ICC prefix
     if menu_id.starts_with(ICC_MENU_PREFIX) {
-        // Récupère la liste des profils pour trouver le nom exact
         // Get profile list to find exact name
         let profiles = icc::list_icc_profiles();
 
-        // Cherche le profil dont l'ID correspond
         // Find profile whose ID matches
         for profile in profiles {
-            // Compare l'ID généré avec l'ID reçu
             // Compare generated ID with received ID
             if profile_name_to_menu_id(&profile.name) == menu_id {
-                // Retourne le nom du profil
                 // Return profile name
                 return Some(profile.name);
             }
         }
     }
 
-    // Aucun profil trouvé
     // No profile found
     None
 }
 
-/// Crée le sous-menu ICC avec tous les profils disponibles
 /// Creates the ICC submenu with all available profiles
 ///
 /// # Arguments
-/// * `app` - Handle de l'application Tauri / Tauri application handle
-/// * `locale` - Locale courante / Current locale
+/// * `app` - Tauri application handle
+/// * `locale` - Current locale
 ///
 /// # Returns
-/// * `Result<Submenu<tauri::Wry>, tauri::Error>` - Le sous-menu ICC créé
+/// * `Result<Submenu<tauri::Wry>, tauri::Error>` - The created ICC submenu
 fn create_icc_submenu<R: tauri::Runtime>(app: &tauri::AppHandle<R>, locale: &str) -> Result<Submenu<R>, tauri::Error> {
-    // Récupère la liste des profils ICC disponibles sur le système
     // Get the list of ICC profiles available on the system
     let profiles = icc::list_icc_profiles();
 
-    // Crée le constructeur du sous-menu ICC
     // Create the ICC submenu builder
     let mut icc_submenu_builder = SubmenuBuilder::new(app, i18n::menu_t(locale, "colour_profiles"));
 
-    // Itère sur chaque profil pour créer un élément de menu
     // Iterate over each profile to create a menu item
     for profile in &profiles {
-        // Génère un ID unique pour l'élément de menu
         // Generate a unique ID for the menu item
         let menu_id = profile_name_to_menu_id(&profile.name);
 
-        // Crée un élément de menu avec case à cocher
         // Create a check menu item
         let menu_item = CheckMenuItemBuilder::with_id(menu_id, &profile.name)
-            // Coche l'élément si c'est le profil actuel
             // Check item if it's the current profile
             .checked(profile.is_current)
-            // Construit l'élément de menu
             // Build the menu item
             .build(app)?;
 
-        // Ajoute l'élément au sous-menu
         // Add item to submenu
         icc_submenu_builder = icc_submenu_builder.item(&menu_item);
     }
 
-    // Log le nombre de profils chargés
     // Log the number of loaded profiles
     println!("Loaded {} ICC profiles into menu", profiles.len());
 
-    // Construit et retourne le sous-menu ICC
     // Build and return the ICC submenu
     icc_submenu_builder.build()
 }
 
-/// Construit et applique le menu complet de l'application
 /// Builds and applies the full application menu
 ///
 /// # Arguments
-/// * `app` - Handle de l'application Tauri / Tauri application handle
-/// * `locale` - Locale courante / Current locale
+/// * `app` - Tauri application handle
+/// * `locale` - Current locale
 fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error> {
-    // === MENU APPLICATION (premier menu sur macOS) ===
     // === APPLICATION MENU (first menu on macOS) ===
-    // Crée l'élément "À propos" avec métadonnées / Create "About" item with metadata
-    let about = PredefinedMenuItem::about(
-        app,
-        Some(i18n::menu_t(locale, "about")), // Titre / Title
-        Some(AboutMetadata {
-            name: Some("Luma11y".to_string()),    // Nom de l'app / App name
-            version: Some("1.0.0".to_string()),           // Version / Version
-            copyright: Some("xxx Licence".to_string()), // Copyright / Copyright
-            authors: Some(vec!["Cédric Trévisan".to_string()]), // Auteurs / Authors
-            ..Default::default()                          // Autres champs par défaut / Other fields default
-        }),
-    )?;
+    // "About" item: opens the dedicated Settings tab.
+    let about = MenuItemBuilder::with_id("about", i18n::menu_t(locale, "about")).build(app)?;
 
-    // Élément Settings avec raccourci Cmd+, / Settings item with Cmd+, shortcut
+    // Settings item with Cmd+, shortcut
     let settings_item = MenuItemBuilder::with_id("settings", i18n::menu_t(locale, "settings"))
         .accelerator("CmdOrCtrl+,")
         .build(app)?;
 
-    // Éléments standards du menu Application / Standard Application menu items
-    // Note : hide/hide_others/show_all sont réservés à macOS car Windows/Linux n'ont
-    // pas de menubar persistante pour réafficher l'application.
+    // Standard Application menu items
     // Note: hide/hide_others/show_all are macOS-only since Windows/Linux have no
     // persistent menubar to bring the app back.
     let separator2 = PredefinedMenuItem::separator(app)?;
     let quit = PredefinedMenuItem::quit(app, Some(i18n::menu_t(locale, "quit")))?;
 
-    // === SOUS-MENU APPARENCE ===
     // === APPEARANCE SUBMENU ===
     let appearance = {
         let state = app.state::<store::AppState>();
@@ -219,7 +176,6 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
         .item(&appearance_dark)
         .build()?;
 
-    // === SOUS-MENU STYLE ===
     // === STYLE SUBMENU ===
     let style_theme = {
         let state = app.state::<store::AppState>();
@@ -238,8 +194,7 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
         .item(&style_classic)
         .build()?;
 
-    // Construit le sous-menu Application / Build Application submenu
-    // Sur macOS on ajoute hide/hide_others/show_all ; ailleurs on les omet.
+    // Build Application submenu
     // On macOS we include hide/hide_others/show_all; elsewhere we omit them.
     let app_menu;
     #[cfg(target_os = "macos")]
@@ -289,10 +244,7 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
         )?;
     }
 
-    // === MENU ÉDITION ===
     // === EDIT MENU ===
-    // Items natifs requis sur macOS pour que ⌘C/⌘V/⌘X/⌘A soient routés vers la
-    // webview (sans eux, l'OS n'associe pas la combinaison à une action).
     // Native items required on macOS so ⌘C/⌘V/⌘X/⌘A are forwarded to the
     // webview (without them, the OS doesn't associate the combo to an action).
     let edit_undo = PredefinedMenuItem::undo(app, None)?;
@@ -312,7 +264,6 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
         .item(&edit_paste)
         .item(&edit_select_all);
 
-    // Ajoute les modèles de copie avec leurs raccourcis
     // Add copy templates with their shortcuts
     let state = app.state::<store::AppState>();
     let templates = state.templates.lock().unwrap().clone();
@@ -347,7 +298,6 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
 
     let edit_submenu = edit_builder.build()?;
 
-    // === SOUS-MENU FENÊTRE ===
     // === WINDOW SUBMENU ===
     let win_minimize = PredefinedMenuItem::minimize(app, Some(i18n::menu_t(locale, "minimize")))?;
     let win_close = PredefinedMenuItem::close_window(app, Some(i18n::menu_t(locale, "close_window")))?;
@@ -370,11 +320,9 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
 
     #[cfg(target_os = "macos")]
     {
-        // Crée le sous-menu ICC avec les profils
         // Create the ICC submenu with profiles
         let icc_submenu = create_icc_submenu(app, locale)?;
 
-        // Crée le menu de l'application
         // Get the application menu
         let root_menu = Menu::with_items(app, &[
             &app_menu,
@@ -382,16 +330,13 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
             &icc_submenu,
             &window_submenu,
         ])?;
-        // Applique le menu à l'application
         // Apply menu to the application
         app.set_menu(root_menu)?;
     }
 
-    // Sur Windows/Linux, pas de menu natif
     // On Windows/Linux, no native menu
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     {
-        // silence le warning à propos des vars non utilisées
         // silence the unused warnings
         let _ = app_menu;
         let _ = edit_submenu;
@@ -401,7 +346,6 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
     Ok(())
 }
 
-/// Commande Tauri pour mettre à jour les modèles de copie depuis le frontend
 /// Tauri command to update copy templates from frontend
 #[tauri::command]
 fn set_copy_templates(app: tauri::AppHandle, state: tauri::State<store::AppState>, templates: Vec<store::CopyTemplate>) {
@@ -413,11 +357,19 @@ fn set_copy_templates(app: tauri::AppHandle, state: tauri::State<store::AppState
     let _ = rebuild_menu(&app, &locale);
 }
 
-/// Ouvre ou focus la fenêtre Settings, avec config plateforme-spécifique.
 /// Opens or focuses the Settings window with platform-specific config.
-fn open_settings_window_impl(app: &tauri::AppHandle) {
+fn open_settings_window_impl(app: &tauri::AppHandle, tab: &str) {
+    // Remember the target tab: the window reads it on init via
+    // `get_settings_initial_tab`.
+    {
+        let state = app.state::<store::AppState>();
+        *state.settings_tab.lock().unwrap() = tab.to_string();
+    }
+
     if let Some(window) = app.get_webview_window("settings") {
         let _ = window.set_focus();
+        // Already open: tell the window to switch tab.
+        let _ = window.emit("settings-navigate", tab);
         return;
     }
 
@@ -427,8 +379,6 @@ fn open_settings_window_impl(app: &tauri::AppHandle) {
         i18n::menu_t(&locale, "settings_title").to_string()
     };
 
-    // Hérite l'état always-on-top de l'app : si la main est pinned,
-    // Settings doit l'être aussi sinon elle s'ouvre derrière la principale
     // Inherit the always-on-top state: if the main window is pinned,
     // Settings must also be pinned, otherwise it opens behind main
     let always_on_top = {
@@ -443,10 +393,10 @@ fn open_settings_window_impl(app: &tauri::AppHandle) {
         WebviewUrl::App("settings.html".into()),
     )
     .title(settings_title)
-    .inner_size(500.0, 700.0)
+    .inner_size(640.0, 700.0)
     .resizable(true)
     .maximizable(false)
-    .min_inner_size(400.0, 700.0)
+    .min_inner_size(520.0, 700.0)
     .always_on_top(always_on_top)
     .center();
 
@@ -459,8 +409,6 @@ fn open_settings_window_impl(app: &tauri::AppHandle) {
 
     #[cfg(not(target_os = "macos"))]
     {
-        // visible(false) : on masque la fenêtre pendant son init pour éviter
-        // le flash de re-layout
         // visible(false): hide the window during init to avoid flash of
         // re-layout
         builder = builder
@@ -478,17 +426,42 @@ fn open_settings_window_impl(app: &tauri::AppHandle) {
     }
 }
 
-/// Commande Tauri pour ouvrir la fenêtre Settings depuis le frontend (menu toolbar).
 /// Tauri command to open the Settings window from the frontend (toolbar menu).
 #[tauri::command]
-async fn open_settings_window(app: tauri::AppHandle) {
+async fn open_settings_window(app: tauri::AppHandle, tab: Option<String>) {
     let inner = app.clone();
     let _ = app.run_on_main_thread(move || {
-        open_settings_window_impl(&inner);
+        open_settings_window_impl(&inner, tab.as_deref().unwrap_or("general"));
     });
 }
 
-/// Applique l'état always-on-top.
+/// Returns the tab to activate when the Settings window opens.
+#[tauri::command]
+fn get_settings_initial_tab(state: tauri::State<store::AppState>) -> String {
+    state.settings_tab.lock().unwrap().clone()
+}
+
+/// Application metadata for the "About" tab.
+#[derive(serde::Serialize)]
+struct AppInfo {
+    name: String,
+    version: String,
+    authors: String,
+    description: String,
+}
+
+/// Returns the app metadata (name, version, authors, description).
+#[tauri::command]
+fn get_app_info(app: tauri::AppHandle) -> AppInfo {
+    let info = app.package_info();
+    AppInfo {
+        name: info.name.clone(),
+        version: info.version.to_string(),
+        authors: info.authors.to_string(),
+        description: info.description.to_string(),
+    }
+}
+
 /// Applies always-on-top state
 fn apply_always_on_top(app: &tauri::AppHandle, value: bool) {
     let locale = {
@@ -509,14 +482,12 @@ fn apply_always_on_top(app: &tauri::AppHandle, value: bool) {
     let _ = app.emit("always-on-top-changed", value);
 }
 
-/// Commande Tauri pour basculer always-on-top depuis le frontend
 /// Tauri command to toggle always-on-top from frontend
 #[tauri::command]
 fn set_always_on_top(app: tauri::AppHandle, value: bool) {
     apply_always_on_top(&app, value);
 }
 
-/// Commande Tauri pour synchroniser le mode d'apparence depuis le frontend
 /// Tauri command to synchronize appearance mode from frontend
 #[tauri::command]
 fn set_appearance(app: tauri::AppHandle, state: tauri::State<store::AppState>, appearance: String) {
@@ -531,7 +502,6 @@ fn set_appearance(app: tauri::AppHandle, state: tauri::State<store::AppState>, a
     let _ = rebuild_menu(&app, &locale);
 }
 
-/// Commande Tauri pour synchroniser le thème de style depuis le frontend
 /// Tauri command to synchronize style theme from frontend
 #[tauri::command]
 fn set_style_theme(app: tauri::AppHandle, state: tauri::State<store::AppState>, style: String) {
@@ -546,11 +516,9 @@ fn set_style_theme(app: tauri::AppHandle, state: tauri::State<store::AppState>, 
     let _ = rebuild_menu(&app, &locale);
 }
 
-/// Commande Tauri pour changer la locale depuis le frontend
 /// Tauri command to change locale from frontend
 #[tauri::command]
 fn set_locale(app: tauri::AppHandle, state: tauri::State<store::AppState>, locale: String) {
-    // Met à jour la locale dans l'état
     // Update locale in state
     {
         let mut current_locale = state.locale.lock().unwrap();
@@ -560,25 +528,52 @@ fn set_locale(app: tauri::AppHandle, state: tauri::State<store::AppState>, local
         *current_locale = locale.clone();
     }
 
-    // Reconstruit le menu avec la nouvelle locale
     // Rebuild menu with new locale
     let _ = rebuild_menu(&app, &locale);
 
-    // Émet l'événement pour notifier toutes les fenêtres
     // Emit event to notify all windows
     let _ = app.emit("locale-changed", &locale);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+/// Under Wayland: the X11 picker cannot capture the screen.
+/// The main window, created hidden, is destroyed before its webview shows
+/// it. Closing the page quits the application (see `on_window_event`).
+#[cfg(target_os = "linux")]
+fn open_wayland_window(app: &tauri::AppHandle) -> tauri::Result<()> {
+    WebviewWindowBuilder::new(app, "wayland", WebviewUrl::App("wayland.html".into()))
+        .title("Wayland is not supported yet")
+        .inner_size(480.0, 260.0)
+        .resizable(false)
+        .maximizable(false)
+        .minimizable(false)
+        .center()
+        .decorations(false)
+        .transparent(true)
+        .build()?;
+    if let Some(main) = app.get_webview_window("main") {
+        main.destroy()?;
+    }
+    eprintln!("Luma11y: Wayland session detected, the X11 color picker cannot run.");
+    Ok(())
+}
+
+/// Relaunches the app once an update has been installed
+#[tauri::command]
+fn restart_app(app: tauri::AppHandle) {
+    app.restart()
+}
+
 pub fn run() {
     tauri::Builder::default()
-        // Initialise le plugin OS pour la détection de locale
         // Initialize OS plugin for locale detection
         .plugin(tauri_plugin_os::init())
-        // Plugin pour les raccourcis clavier globaux (système-wide)
         // Plugin for global (system-wide) keyboard shortcuts
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        // Initialise l'état global du color store
+        // Plugin to open URLs/files with the default app
+        .plugin(tauri_plugin_opener::init())
+        // In-app updates
+        .plugin(tauri_plugin_updater::Builder::new().build())
         // Initialize global color store state
         .manage(store::AppState {
             store: Mutex::new(store::ResultStore::default()),
@@ -587,32 +582,32 @@ pub fn run() {
             appearance: Mutex::new("auto".to_string()),
             style_theme: Mutex::new("modern".to_string()),
             always_on_top: Mutex::new(false),
+            settings_tab: Mutex::new("general".to_string()),
         })
-        // Configure le menu de l'application
         // Configure the application menu
         .setup(|app| {
-            // Récupère le handle de l'application
             // Get the application handle
             let handle = app.handle();
 
-            // Construit le menu initial avec la locale par défaut
+            // Under Wayland: explanation page instead of the application
+            #[cfg(target_os = "linux")]
+            if picker::linux_x11::is_wayland_session() {
+                open_wayland_window(handle)?;
+                return Ok(());
+            }
+
             // Build initial menu with default locale
             rebuild_menu(handle, "en")?;
 
-            // Retourne Ok pour indiquer le succès
             // Return Ok to indicate success
             Ok(())
         })
-        // Gestionnaire d'événements de menu
         // Menu event handler
         .on_menu_event(|app, event| {
-            // Récupère l'ID de l'élément de menu cliqué
             // Get the clicked menu item ID
             let menu_id = event.id().as_ref();
 
-            // === Gestion du changement de langue ===
             // === Language change handling ===
-            // Gestion des modèles de copie
             // Copy template handling
             if menu_id.starts_with("copy_template_") {
                 if let Ok(index) = menu_id["copy_template_".len()..].parse::<usize>() {
@@ -623,7 +618,12 @@ pub fn run() {
 
             match menu_id {
                 "settings" => {
-                    open_settings_window_impl(app);
+                    open_settings_window_impl(app, "general");
+                    return;
+                }
+                "about" => {
+                    // Replaces the native "About" dialog with the dedicated tab.
+                    open_settings_window_impl(app, "about");
                     return;
                 }
                 "appearance_auto" | "appearance_light" | "appearance_dark" => {
@@ -633,7 +633,6 @@ pub fn run() {
                         _ => "auto",
                     };
 
-                    // Met à jour le mode dans l'état et reconstruit le menu
                     // Update mode in state and rebuild menu
                     let state = app.state::<store::AppState>();
                     let locale = {
@@ -649,7 +648,6 @@ pub fn run() {
                 "style_modern" | "style_classic" => {
                     let theme = if menu_id == "style_classic" { "classic" } else { "modern" };
 
-                    // Met à jour le style theme dans l'état et reconstruit le menu
                     // Update style theme in state and rebuild menu
                     let state = app.state::<store::AppState>();
                     let locale = {
@@ -663,7 +661,6 @@ pub fn run() {
                     return;
                 }
                 "always_on_top" => {
-                    // Bascule via le helper partagé
                     // Toggle via shared helper
                     let current = {
                         let state = app.state::<store::AppState>();
@@ -676,37 +673,29 @@ pub fn run() {
                 _ => {}
             }
 
-            // Tente d'extraire le nom du profil depuis l'ID
             // Try to extract profile name from ID
             if let Some(profile_name) = menu_id_to_profile_name(menu_id) {
-                // Met à jour le profil sélectionné dans le backend
                 // Update the selected profile in the backend
                 let _ = icc::select_icc_profile(profile_name.clone());
 
-                // Récupère tous les profils disponibles
                 // Get all available profiles
                 let profiles = icc::list_icc_profiles();
 
-                // Déselectionne tous les profils d'abord
                 // Deselect all profiles first
                 for profile in &profiles {
                     let id = profile_name_to_menu_id(&profile.name);
 
-                    // Essaie de trouver l'item dans le menu principal
                     // Try to find item in main menu
                     if let Some(menu) = app.menu() {
-                        // Cherche d'abord dans le menu principal
                         // First search in main menu
                         if let Some(item) = menu.get(&id) {
                             if let Some(check_item) = item.as_check_menuitem() {
                                 let _ = check_item.set_checked(false);
                             }
                         }
-                        // Sinon, cherche dans tous les items du menu récursivement
                         // Otherwise, search recursively in all menu items
                         else if let Ok(items) = menu.items() {
                             for menu_item in items {
-                                // Si c'est un sous-menu, cherche dedans
                                 // If it's a submenu, search inside
                                 if let Some(submenu) = menu_item.as_submenu() {
                                     if let Some(subitem) = submenu.get(&id) {
@@ -720,7 +709,6 @@ pub fn run() {
                     }
                 }
 
-                // Maintenant, coche uniquement le profil sélectionné
                 // Now, check only the selected profile
                 let selected_id = profile_name_to_menu_id(&profile_name);
                 if let Some(menu) = app.menu() {
@@ -741,16 +729,13 @@ pub fn run() {
                     }
                 }
 
-                // Émet un événement pour notifier le frontend du changement
                 // Emit event to notify frontend of the change
                 let _ = app.emit("icc-profile-changed", &profile_name);
 
-                // Log le changement de profil
                 // Log profile change
                 println!("ICC Profile changed via menu: {}", profile_name);
             }
         })
-        // Enregistre les commandes Tauri
         // Register Tauri commands
         .invoke_handler(tauri::generate_handler![
             store::get_store,
@@ -772,11 +757,25 @@ pub fn run() {
             set_copy_templates,
             set_always_on_top,
             open_settings_window,
+            get_settings_initial_tab,
+            get_app_info,
+            permissions::check_screen_recording_permission,
+            permissions::request_screen_recording_permission,
+            permissions::open_screen_recording_settings,
+            restart_app,
         ])
-        // Lance l'application Tauri
         // Run the Tauri application
+        // The "Wayland not supported" window is the only one open in that case:
+        // closing it quits the application with an error status.
+        .on_window_event(|window, event| {
+            #[cfg(target_os = "linux")]
+            if window.label() == "wayland" && matches!(event, tauri::WindowEvent::Destroyed) {
+                std::process::exit(1);
+            }
+            #[cfg(not(target_os = "linux"))]
+            let _ = (window, event);
+        })
         .run(tauri::generate_context!())
-        // Affiche un message d'erreur si le lancement échoue
         // Display error message if launch fails
         .expect("error while running tauri application");
 }

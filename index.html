@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="/src/colors.css" />
-    <link rel="stylesheet" href="/src/common-style.css" />
+    <link rel="stylesheet" href="/src/buttons.css" />
+    <link rel="stylesheet" href="/src/main.css" />
     <link rel="stylesheet" href="/src/utils.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Luma11y</title>
@@ -19,6 +20,23 @@
       </app-titlebar>
     </header>
     <main id="main" tabindex="-1">
+      <!-- Native <dialog>: focus trap, inert page and Escape come for free -->
+      <dialog class="update-dialog" aria-labelledby="update-title"
+              x-effect="$store.updater.update ? ($el.open || $el.showModal()) : ($el.open && $el.close())"
+              @close="$store.updater.later()">
+        <h2 id="update-title" x-text="$store.uiStore.t('app.update_title', $store.updater.update?.version ?? '')"></h2>
+        <p id="update-body" x-text="$store.uiStore.t('app.update_body')"></p>
+        <div class="actions">
+          <button type="button" class="btn-secondary" @click="$store.updater.later()"
+            x-bind:aria-label="$store.uiStore.t('app.update_later_label')"
+            x-text="$store.uiStore.t('app.update_later')"></button>
+          <button type="button" class="btn-primary" autofocus @click="$store.updater.view()"
+            x-bind:aria-label="$store.uiStore.t('app.update_view_label')"
+            x-text="$store.uiStore.t('app.update_view')"></button>
+        </div>
+      </dialog>
+        </div>
+      </div>
       <div class="colors" x-data="{ rotated: false }">
         <!-- Foreground Color -->
         <div class="wrapper" x-bind:style="`background-color: ${$store.uiStore.backgroundHex}`">
@@ -95,6 +113,7 @@
         <!-- Foreground Color controls -->
         <color-controls
           x-show="showFgControls" x-transition
+          color-key="foreground"
           allow-alpha
           x-bind:alpha="$store.uiStore.foregroundAlpha"
           x-bind:rgb="$store.uiStore.foregroundRgb"
@@ -109,10 +128,10 @@
          <div class="wrapper"
             x-bind:style="`background-color: ${showFgControls ? 'transparent' : $store.uiStore.foregroundHex}`">
             <section id="background"
-              x-bind:style="`background-color: ${$store.uiStore.backgroundHex}`">
+              x-bind:style="`background-color: ${$store.uiStore.backgroundHex}`"
+              x-bind:class="$store.uiStore.backgroundIsDark ? 'isDark' : 'isLight'">
               <div
                 class="color-preview"
-                x-bind:class="$store.uiStore.backgroundIsDark ? 'isDark' : 'isLight'"
               >
                 <h2 id="background-title" x-text="$store.uiStore.t('color.background')">Background</h2>
                 <div class="color-input">
@@ -171,6 +190,7 @@
         <!-- Background Color controls -->
         <color-controls
           x-show="showBgControls" x-transition
+          color-key="background"
           x-bind:rgb="$store.uiStore.backgroundRgb"
           x-bind:formats="JSON.stringify($store.uiStore.backgroundFormats)"
           x-bind:selected-format="$store.uiStore.backgroundFormat"
@@ -250,7 +270,7 @@
             </div>
           </li>
         </ul>
-        <!-- Vue compacte : icônes + pass/fail -->
+        <!-- Compact view: icons + pass/fail -->
         <ul class="progress-compact" x-show="compact" x-transition>
           <li class="compact-item">
             <span class="icon" aria-hidden="true">
@@ -281,7 +301,7 @@
         </ul>
       </section>
 
-      <!-- Toast de confirmation copie / Copy confirmation toast -->
+      <!-- Copy confirmation toast -->
       <div id="copy-toast" class="toast" aria-live="polite"></div>
 
       <!-- ICC Profile Status (debug/info) -->

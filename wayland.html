@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wayland is not supported yet</title>
+    <link rel="stylesheet" href="/src/colors.css" />
+    <link rel="stylesheet" href="/src/buttons.css" />
+    <link rel="stylesheet" href="/src/dialog.css" />
+    <link rel="stylesheet" href="/src/permission.css" />
+  </head>
+  <body>
+    <header>
+      <app-titlebar app-title="Wayland is not supported yet"></app-titlebar>
+    </header>
+    <main>
+      <h1>Wayland is not supported yet</h1>
+      <p>Luma11y needs an X11 session: its color picker cannot capture the screen under Wayland yet.</p>
+      <p class="instructions">Log out, choose an X11 session (for example “Ubuntu on Xorg”), then start Luma11y again.</p>
+      <div class="actions">
+        <button type="button" class="btn-primary" id="quit">Quit</button>
+      </div>
+    </main>
+
+    <script type="module" src="/src/wayland.ts"></script>
+  </body>
+</html>

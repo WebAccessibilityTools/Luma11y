@@ -1,5 +1,4 @@
 // =============================================================================
-// styleTheme.ts - Gestion du thème de style (moderne / classique)
 // styleTheme.ts - Style theme management (modern / classic)
 // =============================================================================
 
@@ -9,22 +8,22 @@ const STORAGE_KEY = 'luma11y-style-theme';
 
 const STYLE_ELEMENT_ID = 'luma11y-style-theme';
 
-/** Retourne la préférence sauvegardée / Returns saved preference */
+/** Returns saved preference */
 export function getStyleTheme(): StyleTheme {
   return (localStorage.getItem(STORAGE_KEY) as StyleTheme) || 'modern';
 }
 
-/** Sauvegarde la préférence et applique / Save preference and apply */
+/** Save preference and apply */
 export function setStyleTheme(theme: StyleTheme): void {
   localStorage.setItem(STORAGE_KEY, theme);
   applyStyleTheme(theme);
 }
 
-/** Applique le thème de style / Apply style theme */
+/** Apply style theme */
 export async function applyStyleTheme(theme?: StyleTheme): Promise<void> {
   const resolved = theme ?? getStyleTheme();
 
-  // Supprime l'ancien style injecté / Remove previously injected style
+  // Remove previously injected style
   const existing = document.getElementById(STYLE_ELEMENT_ID);
   if (existing) existing.remove();
 
@@ -37,7 +36,7 @@ export async function applyStyleTheme(theme?: StyleTheme): Promise<void> {
   document.head.appendChild(style);
 }
 
-/** Initialise le thème de style / Initialize style theme */
+/** Initialize style theme */
 export function initStyleTheme(): void {
   applyStyleTheme();
 }

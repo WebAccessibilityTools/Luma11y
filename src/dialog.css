@@ -1,0 +1,33 @@
+/* Reset margins, paddings and set box-sizing for all elements */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Body styles - vertical and horizontal centering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+strong {
+  color: var(--text-color-strong);
+}
+
+button {
+  &:focus-visible {
+    outline-width: 3px;
+    outline-offset: 4px;
+    outline-style: solid;
+    outline-color: var(--text-color);
+  }
+}
+

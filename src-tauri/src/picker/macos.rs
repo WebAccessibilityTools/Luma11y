@@ -1,87 +1,85 @@
 //! =============================================================================
-//! MACOS.RS - Implémentation macOS du Color Picker
+//! MACOS.RS - macOS implementation of the Color Picker
 //! =============================================================================
 //!
-//! Ce module contient tout le code spécifique à macOS utilisant Cocoa et Core Graphics.
-//! Il crée une fenêtre overlay plein écran qui capture l'écran et affiche
-//! une vue agrandie des pixels autour du curseur.
+//! This module contains all macOS-specific code using Cocoa and Core Graphics.
+//! It creates a full-screen overlay window that captures the screen and displays
+//! a magnified view of the pixels around the cursor.
 //!
 //! # Architecture
-//! - ColorPickerView: Vue personnalisée NSView qui gère le dessin et les événements
-//! - KeyableWindow: Fenêtre personnalisée qui peut devenir la fenêtre clé
-//! - État global: Mutex pour partager les données entre les callbacks
+//! - ColorPickerView: Custom NSView that handles drawing and events
+//! - KeyableWindow: Custom window that can become the key window
+//! - Global state: Mutex to share data between callbacks
 //!
-//! # Flux d'exécution
-//! 1. run() crée l'application et les fenêtres overlay
-//! 2. Les événements souris/clavier sont capturés par ColorPickerView
-//! 3. À chaque mouvement, la couleur est extraite et la vue redessinée
-//! 4. Clic ou Entrée termine l'application et retourne la couleur
+//! # Execution flow
+//! 1. run() creates the application and the overlay windows
+//! 2. Mouse/keyboard events are captured by ColorPickerView
+//! 3. On each movement, the color is extracted and the view redrawn
+//! 4. Click or Enter terminates the application and returns the color
 
 // =============================================================================
 // IMPORTS
 // =============================================================================
 
 // -----------------------------------------------------------------------------
-// Bindings Objective-C modernes (objc2 crate)
+// Modern Objective-C bindings (objc2 crate)
 // -----------------------------------------------------------------------------
-// API moderne et type-safe pour déclarer des classes Objective-C en Rust
 // Modern type-safe API for declaring Objective-C classes in Rust
 use objc2::{define_class, msg_send, ClassType, MainThreadOnly}; // Class declaration macros
 use objc2::rc::{Allocated, Retained};  // Smart pointers for ObjC objects
 
-// Types Foundation (équivalent de la bibliothèque standard ObjC)
+// Foundation types (equivalent of the ObjC standard library)
 use objc2_foundation::{
-    MainThreadMarker,    // Marqueur pour garantir l'exécution sur le thread principal
-    NSAffineTransform,    // Transformations 2D (rotation, translation, échelle)
-    NSCopying,           // Protocole de copie
-    NSPoint,             // Point 2D (x, y)
+    MainThreadMarker,    // Marker to guarantee execution on the main thread
+    NSAffineTransform,    // 2D transforms (rotation, translation, scale)
+    NSCopying,           // Copy protocol
+    NSPoint,             // 2D point (x, y)
     NSRect,              // Rectangle (origin + size)
-    NSSize,              // Taille 2D (width, height)
-    NSString,            // Chaîne de caractères Objective-C
+    NSSize,              // 2D size (width, height)
+    NSString,            // Objective-C string
 };
 
-// Types AppKit (framework UI de macOS)
+// AppKit types (macOS UI framework)
 use objc2_app_kit::{
-    NSAffineTransformNSAppKitAdditions,   // Extensions AppKit pour NSAffineTransform
-    NSApplication,                       // Application principale
-    NSApplicationActivationOptions,      // Options d'activation (ActivateAllWindows, etc.)
-    NSApplicationActivationPolicy,       // Politique d'activation (Regular, Accessory, etc.)
-    NSBezierPath,                        // Chemins vectoriels pour le dessin
-    NSColor,                             // Couleurs
-    NSCursor,                            // Curseur de la souris
-    NSEvent,                             // Événements (souris, clavier, etc.)
-    NSEventModifierFlags,                 // Modificateurs (Shift, Ctrl, etc.)
-    NSFont,                              // Polices de caractères
-    NSGraphicsContext,                   // Contexte de dessin
-    NSRunningApplication,                // Application en cours d'exécution
-    NSScreen,                            // Écran (pour récupérer les dimensions)
-    NSStringDrawing,                     // Extension pour dessiner du texte
-    NSView,                              // Vue de base
-    NSWindow as NSWindow2,               // Fenêtre (renommée pour éviter conflit)
-    NSWindowCollectionBehavior,          // Comportement par rapport aux Spaces / fullscreen
-    NSWindowSharingType,                 // Type de partage de fenêtre (None, ReadOnly, ReadWrite)
-    NSWindowStyleMask,                   // Styles de fenêtre (Borderless, etc.)
+    NSAffineTransformNSAppKitAdditions,   // AppKit extensions for NSAffineTransform
+    NSApplication,                       // Main application
+    NSApplicationActivationOptions,      // Activation options (ActivateAllWindows, etc.)
+    NSApplicationActivationPolicy,       // Activation policy (Regular, Accessory, etc.)
+    NSBezierPath,                        // Vector paths for drawing
+    NSColor,                             // Colors
+    NSCursor,                            // Mouse cursor
+    NSEvent,                             // Events (mouse, keyboard, etc.)
+    NSEventModifierFlags,                 // Modifiers (Shift, Ctrl, etc.)
+    NSFont,                              // Fonts
+    NSGraphicsContext,                   // Drawing context
+    NSRunningApplication,                // Running application
+    NSScreen,                            // Screen (to get dimensions)
+    NSStringDrawing,                     // Extension to draw text
+    NSView,                              // Base view
+    NSWindow as NSWindow2,               // Window (renamed to avoid conflict)
+    NSWindowCollectionBehavior,          // Behavior with respect to Spaces / fullscreen
+    NSWindowSharingType,                 // Window sharing type (None, ReadOnly, ReadWrite)
+    NSWindowStyleMask,                   // Window styles (Borderless, etc.)
 };
 
 // -----------------------------------------------------------------------------
-// Core Graphics (capture d'écran et manipulation d'images)
+// Core Graphics (screen capture and image manipulation)
 // -----------------------------------------------------------------------------
-use core_graphics::display::CGDisplay; // Accès aux écrans
-use core_graphics::image::CGImage;     // Images bitmap
+use core_graphics::display::CGDisplay; // Screen access
+use core_graphics::image::CGImage;     // Bitmap images
 
 // -----------------------------------------------------------------------------
-// Bibliothèque standard Rust
+// Rust standard library
 // -----------------------------------------------------------------------------
-use std::sync::Mutex; // Mutex pour synchronisation thread-safe
+use std::sync::Mutex; // Mutex for thread-safe synchronization
 
 // -----------------------------------------------------------------------------
-// Configuration partagée
+// Shared configuration
 // -----------------------------------------------------------------------------
-// Importe toutes les constantes du module config
+// Import all constants from the config module
 use crate::config::*;
 
 // -----------------------------------------------------------------------------
-// Code commun entre plateformes
 // Common code shared between platforms
 // -----------------------------------------------------------------------------
 use super::common::{
@@ -92,42 +90,35 @@ use super::common::{
 };
 
 // =============================================================================
-// ALIAS DE TYPES ET CONSTANTES
+// TYPE ALIASES AND CONSTANTS
 // =============================================================================
 
-/// Type Bool de objc2 pour les booléens Objective-C
-/// Remplace objc::runtime::BOOL qui est moins type-safe
 /// Bool type from objc2 for Objective-C booleans
 /// Replaces objc::runtime::BOOL which is less type-safe
 use objc2::runtime::Bool;
 
 // =============================================================================
-// FONCTIONS UTILITAIRES (déclarées avant define_class! pour être accessibles)
 // UTILITY FUNCTIONS (declared before define_class! to be accessible)
 // =============================================================================
 
-/// Récupère le facteur d'échelle de l'écran à la position donnée
 /// Gets the scale factor of the screen at the given position
 ///
 /// # Arguments
-/// * `screen_x` - Coordonnée X en coordonnées Cocoa globales
-/// * `screen_y` - Coordonnée Y en coordonnées Cocoa globales
+/// * `screen_x` - X coordinate in global Cocoa coordinates
+/// * `screen_y` - Y coordinate in global Cocoa coordinates
 ///
 /// # Returns
-/// * `f64` - Le facteur d'échelle (2.0 pour Retina, 1.0 sinon)
+/// * `f64` - The scale factor (2.0 for Retina, 1.0 otherwise)
 fn get_scale_factor_at_position(screen_x: f64, screen_y: f64) -> f64 {
-    // Récupère le marqueur de thread principal
     // Get main thread marker
     let Some(mtm) = MainThreadMarker::new() else {
         return 2.0; // Default Retina
     };
     
-    // Récupère la liste des écrans
     // Get list of screens
     let screens = NSScreen::screens(mtm);
     let count = screens.count();
     
-    // Parcourt tous les écrans pour trouver celui qui contient le point
     // Iterate through all screens to find the one containing the point
     for i in 0..count {
         unsafe {
@@ -135,9 +126,7 @@ fn get_scale_factor_at_position(screen_x: f64, screen_y: f64) -> f64 {
             let frame = screen.frame();
             let scale = screen.backingScaleFactor();
             
-            // Vérifie si le point est dans cet écran
             // Check if point is in this screen
-            // Note: En Cocoa, frame.origin est le coin inférieur gauche
             // In Cocoa, frame.origin is the bottom-left corner
             if screen_x >= frame.origin.x 
                 && screen_x <= frame.origin.x + frame.size.width
@@ -149,7 +138,6 @@ fn get_scale_factor_at_position(screen_x: f64, screen_y: f64) -> f64 {
         }
     }
     
-    // Fallback: retourne le facteur de l'écran principal
     // Fallback: return main screen factor
     if let Some(main_screen) = NSScreen::mainScreen(mtm) {
         return main_screen.backingScaleFactor();
@@ -158,32 +146,25 @@ fn get_scale_factor_at_position(screen_x: f64, screen_y: f64) -> f64 {
     2.0 // Default Retina
 }
 
-/// Rafraîchit intelligemment les fenêtres overlay du picker
 /// Smart refresh of picker overlay windows
 /// 
-/// Au lieu de rafraîchir toutes les fenêtres (causant clignotement),
-/// cette fonction ne rafraîchit que les fenêtres affectées par le changement
 /// Instead of refreshing all windows (causing flicker),
 /// this function only refreshes windows affected by the change
 fn refresh_picker_windows_smart(old_screen_x: f64, old_screen_y: f64, new_screen_x: f64, new_screen_y: f64) {
-    // Récupère le marqueur de thread principal
     // Get main thread marker
     let Some(mtm) = MainThreadMarker::new() else {
         return;
     };
     
-    // Récupère l'application partagée
     // Get shared application
     let app = NSApplication::sharedApplication(mtm);
     
-    // Récupère toutes les fenêtres et écrans
     // Get all windows and screens
     let windows = app.windows();
     let window_count = windows.count();
     let screens = NSScreen::screens(mtm);
     let screen_count = screens.count();
     
-    // Trouve les écrans contenant l'ancienne et la nouvelle position
     // Find screens containing old and new positions
     let mut old_screen_index: Option<usize> = None;
     let mut new_screen_index: Option<usize> = None;
@@ -193,7 +174,6 @@ fn refresh_picker_windows_smart(old_screen_x: f64, old_screen_y: f64, new_screen
             let screen: Retained<NSScreen> = msg_send![&*screens, objectAtIndex: i];
             let frame = screen.frame();
             
-            // Vérifie si l'ancienne position est dans cet écran
             // Check if old position is in this screen
             if old_screen_x >= frame.origin.x 
                 && old_screen_x <= frame.origin.x + frame.size.width
@@ -203,7 +183,6 @@ fn refresh_picker_windows_smart(old_screen_x: f64, old_screen_y: f64, new_screen
                 old_screen_index = Some(i);
             }
             
-            // Vérifie si la nouvelle position est dans cet écran
             // Check if new position is in this screen
             if new_screen_x >= frame.origin.x 
                 && new_screen_x <= frame.origin.x + frame.size.width
@@ -215,11 +194,9 @@ fn refresh_picker_windows_smart(old_screen_x: f64, old_screen_y: f64, new_screen
         }
     }
     
-    // Si on est sur le même écran, ne rafraîchir que cette fenêtre
     // If on same screen, only refresh that window
     if old_screen_index == new_screen_index {
         if let Some(screen_idx) = new_screen_index {
-            // Rafraîchit uniquement la fenêtre de cet écran
             // Only refresh window for this screen
             unsafe {
                 if screen_idx < window_count {
@@ -234,7 +211,6 @@ fn refresh_picker_windows_smart(old_screen_x: f64, old_screen_y: f64, new_screen
             }
         }
     } else {
-        // Changement d'écran : rafraîchir l'ancien ET le nouveau
         // Screen change: refresh old AND new
         for idx in [old_screen_index, new_screen_index].iter().filter_map(|&x| x) {
             unsafe {
@@ -253,14 +229,13 @@ fn refresh_picker_windows_smart(old_screen_x: f64, old_screen_y: f64, new_screen
 }
 
 // =============================================================================
-// CLASSES PERSONNALISÉES OBJECTIVE-C
+// CUSTOM OBJECTIVE-C CLASSES
 // =============================================================================
 
 // -----------------------------------------------------------------------------
-// ColorPickerView - Vue personnalisée pour le color picker
+// ColorPickerView - Custom view for the color picker
 // -----------------------------------------------------------------------------
 
-// Macro pour déclarer une classe Objective-C en Rust avec la nouvelle syntaxe define_class! (objc2 0.6+)
 // New define_class! macro syntax for objc2 0.6+
 define_class!(
     // SAFETY:
@@ -270,19 +245,14 @@ define_class!(
     #[thread_kind = MainThreadOnly]              // Can only be used on the main thread
     #[name = "ColorPickerView"]                  // Objective-C class name
 
-    /// Vue personnalisée qui gère tout le rendu et les événements du color picker
     /// Custom view that handles all rendering and events for the color picker
     pub struct ColorPickerView;
 
-    // Implémentation des méthodes Objective-C
     // Implementation of Objective-C methods
     impl ColorPickerView {
         // ---------------------------------------------------------------------
-        // acceptsFirstResponder - Permet à la vue de recevoir les événements clavier
         // acceptsFirstResponder - Allows the view to receive keyboard events
         // ---------------------------------------------------------------------
-        /// Indique que cette vue peut devenir le "first responder"
-        /// Nécessaire pour recevoir les événements clavier
         /// Indicates that this view can become the "first responder"
         /// Required to receive keyboard events
         #[unsafe(method(acceptsFirstResponder))]
@@ -291,12 +261,8 @@ define_class!(
         }
 
         // ---------------------------------------------------------------------
-        // acceptsFirstMouse: - Accepte le premier clic sans activation
         // acceptsFirstMouse: - Accepts first mouse click without activation
         // ---------------------------------------------------------------------
-        /// Indique que cette vue accepte le premier clic de souris
-        /// Sans cela, le premier clic activerait seulement la fenêtre,
-        /// et un second clic serait nécessaire pour déclencher mouseDown:
         /// Indicates that this view accepts the first mouse click
         /// Without this, the first click would only activate the window,
         /// and a second click would be needed to trigger mouseDown:
@@ -306,18 +272,13 @@ define_class!(
         }
 
         // ---------------------------------------------------------------------
-        // mouseDown: - Gère les clics de souris
         // mouseDown: - Handles mouse clicks
         // ---------------------------------------------------------------------
-        /// Appelé quand l'utilisateur clique avec la souris
-        /// En mode normal: sauvegarde la couleur et termine l'application
-        /// En mode continue: sauvegarde la couleur et bascule fg/bg
         /// Called when the user clicks with the mouse
         /// In normal mode: saves the current color and terminates the application
         /// In continue mode: saves the current color and toggles fg/bg
         #[unsafe(method(mouseDown:))]
         fn mouse_down(&self, _event: &NSEvent) {
-            // Vérifie si le mode continue est activé
             // Check if continue mode is enabled
             let is_continue_mode = if let Ok(mode) = CONTINUE_MODE.lock() {
                 *mode // Copy the boolean value
@@ -325,7 +286,6 @@ define_class!(
                 false // Default to disabled if lock fails
             };
 
-            // Récupère le mode fg actuel
             // Get the current fg mode
             let is_fg_mode = if let Ok(mode) = FG_MODE.lock() {
                 *mode // Copy the boolean value
@@ -333,12 +293,9 @@ define_class!(
                 true // Default to fg if lock fails
             };
 
-            // Vérifie si la couleur opposée a déjà été sélectionnée (= on a déjà basculé)
             // Check if the opposite color has already been selected (= we already toggled)
-            // Si fg_mode=true, on vérifie BG_COLOR. Si fg_mode=false, on vérifie FG_COLOR.
             // If fg_mode=true, check BG_COLOR. If fg_mode=false, check FG_COLOR.
             let has_already_toggled = if is_fg_mode {
-                // On est en mode fg, vérifie si bg a déjà été sélectionné
                 // We're in fg mode, check if bg was already selected
                 if let Ok(bg) = BG_COLOR.lock() {
                     bg.is_some() // True if background color exists
@@ -346,7 +303,6 @@ define_class!(
                     false
                 }
             } else {
-                // On est en mode bg, vérifie si fg a déjà été sélectionné
                 // We're in bg mode, check if fg was already selected
                 if let Ok(fg) = FG_COLOR.lock() {
                     fg.is_some() // True if foreground color exists
@@ -359,16 +315,13 @@ define_class!(
             if let Ok(state) = MOUSE_STATE.lock() {
                 // If we have information about the current color
                 if let Some(ref info) = *state {
-                    // Stocke la couleur dans la variable appropriée selon fg_mode
                     // Store the color in the appropriate variable based on fg_mode
                     if is_fg_mode {
-                        // Stocke dans FG_COLOR
                         // Store in FG_COLOR
                         if let Ok(mut fg_color) = FG_COLOR.lock() {
                             *fg_color = Some((info.r, info.g, info.b));
                         }
                     } else {
-                        // Stocke dans BG_COLOR
                         // Store in BG_COLOR
                         if let Ok(mut bg_color) = BG_COLOR.lock() {
                             *bg_color = Some((info.r, info.g, info.b));
@@ -378,69 +331,53 @@ define_class!(
             }
 
             if is_continue_mode && !has_already_toggled {
-                // Mode continue, premier clic: bascule entre fg et bg
                 // Continue mode, first click: toggle between fg and bg
                 if let Ok(mut fg_mode) = FG_MODE.lock() {
                     *fg_mode = !*fg_mode; // Toggle fg mode
                 }
-                // Demande un rafraîchissement pour mettre à jour l'affichage
                 // Request a refresh to update the display
                 self.setNeedsDisplay(true);
             } else {
-                // Mode normal OU mode continue après toggle: termine l'application
                 // Normal mode OR continue mode after toggle: stop the application
                 stop_application();
             }
         }
 
         // ---------------------------------------------------------------------
-        // mouseMoved: - Gère les mouvements de souris
         // mouseMoved: - Handles mouse movements
         // ---------------------------------------------------------------------
-        /// Appelé quand la souris se déplace
-        /// Met à jour la position et la couleur, puis redessine
         /// Called when the mouse moves
         /// Updates the position and color, then redraws
         #[unsafe(method(mouseMoved:))]
         fn mouse_moved(&self, event: &NSEvent) {
             // Get the mouse position in window coordinates
-            // Récupère la position de la souris dans les coordonnées de la fenêtre
             let location: NSPoint = event.locationInWindow();
 
             // Get the parent window of this view
-            // Récupère la fenêtre parente de cette vue
             let window_opt: Option<Retained<NSWindow2>> = self.window();
 
             // If we have a valid window
-            // Si nous avons une fenêtre valide
             if let Some(window) = window_opt {
                 // Convert window coordinates to screen coordinates
-                // Convertit les coordonnées de fenêtre en coordonnées d'écran
                 let screen_location: NSPoint = window.convertPointToScreen(location);
 
-                // CORRECTION MULTI-ÉCRAN / MULTI-SCREEN FIX:
-                // Utilise le facteur d'échelle de l'écran où se trouve le curseur,
-                // pas celui de la fenêtre qui reçoit l'événement
+                // MULTI-SCREEN FIX:
                 // Use the scale factor of the screen where the cursor is located,
                 // not the one from the window receiving the event
                 let scale_factor: f64 = get_scale_factor_at_position(screen_location.x, screen_location.y);
 
-                // Récupère le nombre de pixels capturés pour la taille de capture
                 // Get captured pixels count for capture size
                 let captured_pixels = match CURRENT_CAPTURED_PIXELS.lock() {
                     Ok(p) => *p,
                     Err(_) => CAPTURED_PIXELS,
                 };
                 
-                // Taille de capture en points (ajustée pour Retina)
                 // Capture size in points (adjusted for Retina)
                 let capture_size = captured_pixels / scale_factor;
 
-                // Capture la zone et extrait la couleur du pixel central
                 // Capture the area and extract the center pixel color
                 if let Some((_image, r, g, b)) = capture_and_get_center_color(screen_location.x, screen_location.y, capture_size, captured_pixels) {
                     // Format the color in hexadecimal (#RRGGBB)
-                    // Utilise format_hex_color du module common
                     // Uses format_hex_color from common module
                     let hex_color = format_hex_color(r, g, b);
 
@@ -467,12 +404,8 @@ define_class!(
         }
 
         // ---------------------------------------------------------------------
-        // scrollWheel: - Gère la molette de défilement
         // scrollWheel: - Handles scroll wheel
         // ---------------------------------------------------------------------
-        /// Appelé quand l'utilisateur utilise la molette de défilement
-        /// Sans Shift: ajuste le niveau de zoom
-        /// Avec Shift: ajuste le nombre de pixels capturés
         /// Called when the user uses the scroll wheel
         /// Without Shift: adjusts zoom level
         /// With Shift: adjusts captured pixels count
@@ -484,24 +417,19 @@ define_class!(
             // If the wheel moved
             if delta_y != 0.0 {
                 // Get modifier flags to check for Shift
-                // Récupère les modificateurs pour vérifier Shift
                 let modifier_flags: NSEventModifierFlags = event.modifierFlags();
                 let shift_pressed = modifier_flags.contains(NSEventModifierFlags::Shift);
 
                 if shift_pressed {
-                    // Shift + molette: ajuste le nombre de pixels capturés
                     // Shift + wheel: adjust captured pixels count
                     if let Ok(mut pixels) = CURRENT_CAPTURED_PIXELS.lock() {
-                        // Calcule la nouvelle valeur (direction inversée pour UX intuitive)
                         // Calculate new value (inverted direction for intuitive UX)
                         let direction = if delta_y > 0.0 { 1.0 } else { -1.0 };
                         let new_pixels = *pixels + direction * CAPTURED_PIXELS_STEP;
-                        // Clamp entre min et max
                         // Clamp between min and max
                         *pixels = new_pixels.clamp(CAPTURED_PIXELS_MIN, CAPTURED_PIXELS_MAX);
                     }
                 } else {
-                    // Molette seule: ajuste le zoom
                     // Wheel alone: adjust zoom
                     if let Ok(mut zoom) = CURRENT_ZOOM.lock() {
                         // Calculate new zoom by adding delta * zoom step
@@ -517,11 +445,8 @@ define_class!(
         }
 
         // ---------------------------------------------------------------------
-        // keyDown: - Gère les touches du clavier
         // keyDown: - Handles keyboard keys
         // ---------------------------------------------------------------------
-        /// Appelé quand une touche est pressée
-        /// Gère ESC (annuler), Entrée (confirmer), et flèches (déplacer)
         /// Called when a key is pressed
         /// Handles ESC (cancel), Enter (confirm), and arrows (move)
         #[unsafe(method(keyDown:))]
@@ -536,7 +461,6 @@ define_class!(
             let shift_pressed = modifier_flags.contains(NSEventModifierFlags::Shift);
             
             // Get the scale factor to adjust movement for Retina displays
-            // Sur Retina (scale_factor=2.0), 1 pixel = 0.5 point
             // On Retina (scale_factor=2.0), 1 pixel = 0.5 point
             let scale_factor = if let Ok(state) = MOUSE_STATE.lock() {
                 if let Some(ref info) = *state {
@@ -550,7 +474,6 @@ define_class!(
             
             // Determine movement distance in points
             // 1 pixel = 1/scale_factor points
-            // Sans Shift: 1 pixel, avec Shift: SHIFT_MOVE_PIXELS pixels
             // Without Shift: 1 pixel, with Shift: SHIFT_MOVE_PIXELS pixels
             let pixels_to_move = if shift_pressed { SHIFT_MOVE_PIXELS } else { 1.0 };
             let move_amount = pixels_to_move / scale_factor;
@@ -561,8 +484,6 @@ define_class!(
                 stop_application();
             } else if key_code == 36 {
                 // Enter - Confirm the selection and exit
-                // Entrée - Confirme la sélection et quitte
-                // Récupère le mode fg actuel
                 // Get the current fg mode
                 let is_fg_mode = if let Ok(mode) = FG_MODE.lock() {
                     *mode
@@ -572,7 +493,6 @@ define_class!(
 
                 if let Ok(state) = MOUSE_STATE.lock() {
                     if let Some(ref info) = *state {
-                        // Stocke la couleur dans la variable appropriée selon fg_mode
                         // Store the color in the appropriate variable based on fg_mode
                         if is_fg_mode {
                             if let Ok(mut fg_color) = FG_COLOR.lock() {
@@ -588,50 +508,40 @@ define_class!(
                 stop_application();
             } else if key_code == 8 {
                 // C key - Toggle continue mode
-                // Touche C - Bascule le mode continue
                 if let Ok(mut continue_mode) = CONTINUE_MODE.lock() {
                     *continue_mode = !*continue_mode; // Toggle the mode
                 }
                 // Request a refresh to update the display
-                // Demande un rafraîchissement pour mettre à jour l'affichage
                 self.setNeedsDisplay(true);
             } else if key_code == 34 {
                 // I key - Zoom in or increase captured pixels
-                // Touche I - Zoom avant ou augmente les pixels capturés
                 if shift_pressed {
-                    // Shift+I: augmente le nombre de pixels capturés
                     // Shift+I: increase captured pixels count
                     if let Ok(mut pixels) = CURRENT_CAPTURED_PIXELS.lock() {
                         *pixels = (*pixels + CAPTURED_PIXELS_STEP).min(CAPTURED_PIXELS_MAX);
                     }
                 } else {
-                    // I seul: zoom avant
                     // I alone: zoom in
                     if let Ok(mut zoom) = CURRENT_ZOOM.lock() {
                         *zoom = (*zoom + ZOOM_STEP).min(ZOOM_MAX);
                     }
                 }
                 // Request a refresh to update the display
-                // Demande un rafraîchissement pour mettre à jour l'affichage
                 self.setNeedsDisplay(true);
             } else if key_code == 31 {
                 // O key - Zoom out or decrease captured pixels
-                // Touche O - Zoom arrière ou diminue les pixels capturés
                 if shift_pressed {
-                    // Shift+O: diminue le nombre de pixels capturés
                     // Shift+O: decrease captured pixels count
                     if let Ok(mut pixels) = CURRENT_CAPTURED_PIXELS.lock() {
                         *pixels = (*pixels - CAPTURED_PIXELS_STEP).max(CAPTURED_PIXELS_MIN);
                     }
                 } else {
-                    // O seul: zoom arrière
                     // O alone: zoom out
                     if let Ok(mut zoom) = CURRENT_ZOOM.lock() {
                         *zoom = (*zoom - ZOOM_STEP).max(ZOOM_MIN);
                     }
                 }
                 // Request a refresh to update the display
-                // Demande un rafraîchissement pour mettre à jour l'affichage
                 self.setNeedsDisplay(true);
             } else {
                 // Arrow key codes: left=123, right=124, down=125, up=126
@@ -648,7 +558,6 @@ define_class!(
                     // Move the cursor and update the state
                     if let Ok(state) = MOUSE_STATE.lock() {
                         if let Some(ref info) = *state {
-                            // Copie les valeurs nécessaires AVANT de libérer le lock
                             // Copy needed values BEFORE releasing the lock
                             let old_screen_x = info.screen_x;
                             let old_screen_y = info.screen_y;
@@ -657,23 +566,18 @@ define_class!(
                             let new_x = old_screen_x + dx;
                             let new_y = old_screen_y + dy;
 
-                            // Récupère le facteur d'échelle de l'écran à la NOUVELLE position
                             // Get scale factor of the screen at the NEW position
                             let scale_factor = get_scale_factor_at_position(new_x, new_y);
 
-                            // Récupère le nombre de pixels capturés pour la taille de capture
                             // Get captured pixels count for capture size
                             let captured_pixels = match CURRENT_CAPTURED_PIXELS.lock() {
                                 Ok(p) => *p,
                                 Err(_) => CAPTURED_PIXELS,
                             };
                             
-                            // Taille de capture en points (ajustée pour Retina)
                             // Capture size in points (adjusted for Retina)
                             let capture_size = captured_pixels / scale_factor;
 
-                            // Récupère la hauteur de l'écran principal pour la conversion Y
-                            // CGEvent utilise des coordonnées globales basées sur l'écran principal (screens[0])
                             // Get main screen height for Y conversion
                             // CGEvent uses global coordinates based on main screen (screens[0])
                             let screen_height_points = if let Some(mtm) = objc2_foundation::MainThreadMarker::new() {
@@ -697,13 +601,10 @@ define_class!(
                             // Convert Cocoa coordinates (origin bottom-left, in points) to 
                             // Core Graphics coordinates (origin top-left, in points)
                             // CGEvent uses POINTS, not pixels
-                            // Convertit les coordonnées Cocoa (origine en bas, en points) vers
-                            // les coordonnées Core Graphics (origine en haut, en points)
                             let cg_x = new_x;
                             let cg_y = screen_height_points - new_y;
 
                             // Move the mouse cursor using CGEvent (more reliable than warp)
-                            // Déplace le curseur de la souris en utilisant CGEvent (plus fiable que warp)
                             use core_graphics::event::{CGEvent, CGEventType, CGMouseButton};
                             use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
                             use core_graphics::geometry::CGPoint as CGPointCG;
@@ -723,10 +624,8 @@ define_class!(
                             // Release the lock before getting the new color
                             drop(state);
 
-                            // Capture la zone et extrait la couleur du pixel central
                             // Capture the area and extract the center pixel color
                             if let Some((_image, r, g, b)) = capture_and_get_center_color(new_x, new_y, capture_size, captured_pixels) {
-                                // Utilise format_hex_color du module common
                                 // Uses format_hex_color from common module
                                 let hex_color = format_hex_color(r, g, b);
 
@@ -754,7 +653,6 @@ define_class!(
 
                                 // CORRECTION CLIGNOTEMENT : Utilise un refresh intelligent
                                 // FLICKER FIX: Use smart refresh
-                                // Ne rafraîchit que les fenêtres affectées (ancienne et nouvelle position)
                                 // Only refresh affected windows (old and new position)
                                 refresh_picker_windows_smart(old_screen_x, old_screen_y, new_x, new_y);
                             }
@@ -765,11 +663,8 @@ define_class!(
         }
 
         // ---------------------------------------------------------------------
-        // drawRect: - Dessine le contenu de la vue
         // drawRect: - Draws the view content
         // ---------------------------------------------------------------------
-        /// Appelé par le système quand la vue doit être redessinée
-        /// Délègue à la fonction draw_view()
         /// Called by the system when the view needs to be redrawn
         /// Delegates to the draw_view() function
         #[unsafe(method(drawRect:))]
@@ -781,11 +676,9 @@ define_class!(
 );
 
 // -----------------------------------------------------------------------------
-// KeyableWindow - Fenêtre qui peut recevoir les événements clavier
 // KeyableWindow - Window that can receive keyboard events
 // -----------------------------------------------------------------------------
 
-// Macro pour déclarer KeyableWindow avec la nouvelle syntaxe define_class! (objc2 0.6+)
 // New define_class! macro syntax for objc2 0.6+
 define_class!(
     // SAFETY:
@@ -795,15 +688,11 @@ define_class!(
     #[thread_kind = MainThreadOnly]              // Can only be used on the main thread
     #[name = "KeyableWindow"]                    // Objective-C class name
 
-    /// Fenêtre personnalisée qui peut devenir la fenêtre clé
-    /// Par défaut, les fenêtres borderless ne peuvent pas devenir key window
     /// Custom window that can become the key window
     /// By default, borderless windows cannot become key windows
     pub struct KeyableWindow;
 
     impl KeyableWindow {
-        // Surcharge canBecomeKeyWindow pour retourner true
-        // Permet à cette fenêtre sans bordure de recevoir les événements clavier
         // Override canBecomeKeyWindow to return true
         // Allows this borderless window to receive keyboard events
         #[unsafe(method(canBecomeKeyWindow))]
@@ -814,113 +703,91 @@ define_class!(
 );
 
 // =============================================================================
-// ÉTAT GLOBAL
+// GLOBAL STATE
 // =============================================================================
 
-/// État global protégé par Mutex pour la position de la souris et la couleur
-/// Mutex permet un accès thread-safe depuis les différents callbacks
+/// Global state protected by Mutex for mouse position and color
+/// Mutex allows thread-safe access from the different callbacks
 static MOUSE_STATE: Mutex<Option<MouseColorInfo>> = Mutex::new(None);
 
-/// État global pour le niveau de zoom actuel
-/// Initialisé avec le facteur de zoom par défaut
+/// Global state for the current zoom level
+/// Initialized with the default zoom factor
 static CURRENT_ZOOM: Mutex<f64> = Mutex::new(INITIAL_ZOOM_FACTOR);
 
-/// État global pour le nombre de pixels capturés
-/// Initialisé avec la valeur par défaut de config
 /// Global state for captured pixels count
 /// Initialized with default value from config
 static CURRENT_CAPTURED_PIXELS: Mutex<f64> = Mutex::new(CAPTURED_PIXELS);
 
-/// Nombre minimum de pixels capturés (doit être impair)
 /// Minimum captured pixels (must be odd)
 const CAPTURED_PIXELS_MIN: f64 = 9.0;
 
-/// Nombre maximum de pixels capturés (doit être impair)
 /// Maximum captured pixels (must be odd)
 const CAPTURED_PIXELS_MAX: f64 = 21.0;
 
-/// Pas d'incrément pour les pixels capturés (2 pour rester impair)
 /// Increment step for captured pixels (2 to stay odd)
 const CAPTURED_PIXELS_STEP: f64 = 2.0;
 
-/// Stocke la couleur de premier plan sélectionnée (foreground)
 /// Stores the selected foreground color
 static FG_COLOR: Mutex<Option<(u8, u8, u8)>> = Mutex::new(None);
 
-/// Stocke la couleur d'arrière-plan sélectionnée (background)
 /// Stores the selected background color
 static BG_COLOR: Mutex<Option<(u8, u8, u8)>> = Mutex::new(None);
 
-/// Mode d'affichage: true = arc du haut (foreground), false = arc du bas (background)
 /// Display mode: true = top arc (foreground), false = bottom arc (background)
 static FG_MODE: Mutex<bool> = Mutex::new(true);
 
-/// Mode continue: true = activé, false = désactivé
 /// Continue mode: true = enabled, false = disabled
-/// Quand activé, une pastille "C" rouge est affichée avant le texte hex
 /// When enabled, a red "C" badge is displayed before the hex text
 static CONTINUE_MODE: Mutex<bool> = Mutex::new(false);
 
-// ColorPickerResult est maintenant défini dans common.rs
 // ColorPickerResult is now defined in common.rs
 
-/// Structure contenant toutes les informations sur la position et la couleur actuelles
 /// Structure containing all information about current position and color
 struct MouseColorInfo {
-    x: f64,          // Position X dans les coordonnées de la fenêtre
-    y: f64,          // Position Y dans les coordonnées de la fenêtre
-    screen_x: f64,   // Position X dans les coordonnées de l'écran
-    screen_y: f64,   // Position Y dans les coordonnées de l'écran
-    r: u8,           // Composante rouge (0-255)
-    g: u8,           // Composante verte (0-255)
-    b: u8,           // Composante bleue (0-255)
-    hex_color: String, // Code couleur hexadécimal (#RRGGBB)
-    scale_factor: f64, // Facteur d'échelle de l'écran (2.0 pour Retina)
+    x: f64,          // X position in window coordinates
+    y: f64,          // Y position in window coordinates
+    screen_x: f64,   // X position in screen coordinates
+    screen_y: f64,   // Y position in screen coordinates
+    r: u8,           // Red component (0-255)
+    g: u8,           // Green component (0-255)
+    b: u8,           // Blue component (0-255)
+    hex_color: String, // Hexadecimal color code (#RRGGBB)
+    scale_factor: f64, // Screen scale factor (2.0 for Retina)
 }
 
 // =============================================================================
-// FONCTIONS DE CAPTURE D'ÉCRAN
+// SCREEN CAPTURE FUNCTIONS
 // =============================================================================
 
-/// Capture une zone carrée de pixels autour des coordonnées données
 /// Captures a square area of pixels around the given coordinates
 ///
 /// # Arguments
-/// * `x` - Coordonnée X du centre (coordonnées Cocoa en points, origine en bas à gauche)
-///        X coordinate of the center (Cocoa coordinates in points, origin at bottom-left)
-/// * `y` - Coordonnée Y du centre (coordonnées Cocoa en points)
-///        Y coordinate of the center (Cocoa coordinates in points)
-/// * `size` - Taille du carré à capturer (en points)
-///           Size of the square to capture (in points)
+/// * `x` - X coordinate of the center (Cocoa coordinates in points, origin at bottom-left)
+/// * `y` - Y coordinate of the center (Cocoa coordinates in points)
+/// * `size` - Size of the square to capture (in points)
 ///
-/// # Retourne / Returns
-/// * `Some(CGImage)` - L'image capturée si la capture a réussi
-///                    The captured image if capture succeeded
-/// * `None` - Si la capture a échoué / If capture failed
+/// # Returns
+/// * `Some(CGImage)` - The captured image if capture succeeded
+/// * `None` - If capture failed
 fn capture_zoom_area(x: f64, y: f64, size: f64) -> Option<CGImage> {
-    // Importe les types géométriques de Core Graphics
     // Import Core Graphics geometry types
     use core_graphics::geometry::{CGRect, CGPoint as CGPointStruct, CGSize};
 
-    // CORRECTION MULTI-ÉCRAN : Trouve l'écran qui contient les coordonnées données
     // MULTI-SCREEN FIX: Find the screen that contains the given coordinates
     let mtm = objc2_foundation::MainThreadMarker::new()?;
     let screens = NSScreen::screens(mtm);
     let count = screens.count();
     
-    // Variables pour stocker les informations de l'écran trouvé
     // Variables to store the found screen information
     let mut target_screen_frame: Option<NSRect> = None;
     let mut target_display_id: Option<u32> = None;
     
-    // Parcourt tous les écrans pour trouver celui qui contient le point
     // Iterate through all screens to find the one containing the point
     for i in 0..count {
         unsafe {
             let screen: Retained<NSScreen> = msg_send![&*screens, objectAtIndex: i];
             let frame = screen.frame();
             
-            // Vérifie si le point (x, y) est dans ce cadre d'écran
             // Check if point (x, y) is within this screen frame
             if x >= frame.origin.x 
                 && x <= frame.origin.x + frame.size.width
@@ -929,14 +796,11 @@ fn capture_zoom_area(x: f64, y: f64, size: f64) -> Option<CGImage> {
             {
                 target_screen_frame = Some(frame);
                 
-                // Récupère l'ID du display Core Graphics pour cet écran
                 // Get the Core Graphics display ID for this screen
-                // deviceDescription contient un dictionnaire avec l'ID du display
                 // deviceDescription contains a dictionary with the display ID
                 let device_desc = screen.deviceDescription();
                 let ns_screen_number_key = NSString::from_str("NSScreenNumber");
                 if let Some(screen_number) = device_desc.objectForKey(&ns_screen_number_key) {
-                    // NSNumber vers u32 via msg_send (dé-référence avec &*)
                     // NSNumber to u32 via msg_send (dereference with &*)
                     let display_id: u32 = msg_send![&*screen_number, unsignedIntValue];
                     target_display_id = Some(display_id);
@@ -946,76 +810,60 @@ fn capture_zoom_area(x: f64, y: f64, size: f64) -> Option<CGImage> {
         }
     }
     
-    // Si on n'a pas trouvé d'écran contenant le point, utilise l'écran principal en fallback
     // If no screen was found containing the point, use main screen as fallback
     let (screen_frame, display) = if let (Some(frame), Some(display_id)) = (target_screen_frame, target_display_id) {
         (frame, CGDisplay::new(display_id))
     } else {
-        // Fallback vers l'écran principal
         // Fallback to main screen
         let main_screen = NSScreen::mainScreen(mtm)?;
         let frame = main_screen.frame();
         (frame, CGDisplay::main())
     };
     
-    // Hauteur de l'écran trouvé en points (pour conversion de coordonnées)
     // Height of the found screen in points (for coordinate conversion)
     let screen_height_points = screen_frame.size.height;
     
-    // Convertit les coordonnées globales Cocoa vers les coordonnées locales de l'écran
     // Convert global Cocoa coordinates to local screen coordinates
-    // En Cocoa : origine en bas à gauche, coordonnées globales
     // In Cocoa: origin at bottom-left, global coordinates
-    // En CG : origine en haut à gauche, coordonnées locales à l'écran
     // In CG: origin at top-left, local to screen
     
-    // Coordonnée X locale à l'écran (relatif à l'origine de l'écran)
     // Local X coordinate to the screen (relative to screen origin)
     let local_x = x - screen_frame.origin.x;
     
-    // Coordonnée Y locale, convertie de Cocoa (bas) vers CG (haut)
     // Local Y coordinate, converted from Cocoa (bottom) to CG (top)
     let local_y_cocoa = y - screen_frame.origin.y;
     let local_y_cg = screen_height_points - local_y_cocoa;
 
-    // La taille de capture en points
     // Capture size in points
     let capture_size = size;
     let half_size = capture_size / 2.0;
 
-    // Crée le rectangle de capture centré sur le point (coordonnées locales CG)
     // Create capture rectangle centered on the point (local CG coordinates)
     let rect = CGRect::new(
         &CGPointStruct::new(local_x - half_size, local_y_cg - half_size),
         &CGSize::new(capture_size, capture_size)
     );
 
-    // Capture l'image dans le rectangle spécifié sur l'écran correct
     // Capture the image in the specified rectangle on the correct screen
     display.image_for_rect(rect)
 }
 
-/// Extrait la couleur du pixel central d'une image CGImage
-/// et applique la conversion ICC si un profil est sélectionné
+/// Extracts the center pixel color from a CGImage
+/// and applies ICC conversion if a profile is selected
 ///
 /// # Arguments
-/// * `image` - L'image capturée
-/// * `target_pixels` - Nombre de pixels cibles pour le calcul du centre
+/// * `image` - The captured image
+/// * `target_pixels` - Target pixel count for the center computation
 ///
-/// # Retourne
-/// * `Some((r, g, b))` - Les composantes RGB en u8 [0-255] converties en sRGB
-/// * `None` - Si l'extraction a échoué
+/// # Returns
+/// * `Some((r, g, b))` - RGB components as u8 [0-255] converted to sRGB
+/// * `None` - If extraction failed
 fn get_center_pixel_from_image(image: &CGImage, target_pixels: f64) -> Option<(u8, u8, u8)> {
-    // Récupère les dimensions de l'image
     // Get image dimensions
     let img_width = image.width() as f64;
     let img_height = image.height() as f64;
     
-    // Calcule le décalage de crop comme dans draw_view
     // Calculate crop offset like in draw_view
-    // Note: Dans draw_view, crop_x et crop_y sont utilisés pour NSImage.drawInRect:fromRect:
-    // où l'origine est en BAS à gauche (convention Cocoa)
-    // Mais les données CGImage sont stockées avec l'origine en HAUT à gauche
     // In draw_view, crop_x and crop_y are used for NSImage.drawInRect:fromRect:
     // where origin is at BOTTOM-left (Cocoa convention)
     // But CGImage data is stored with origin at TOP-left
@@ -1026,8 +874,6 @@ fn get_center_pixel_from_image(image: &CGImage, target_pixels: f64) -> Option<(u
         0.0
     };
     
-    // Pour NSImage (draw_view), crop_y est depuis le bas
-    // Pour CGImage (données), on doit calculer depuis le haut
     // For NSImage (draw_view), crop_y is from bottom
     // For CGImage (data), we need to calculate from top
     let crop_y_from_bottom = if img_height > target_pixels {
@@ -1036,46 +882,36 @@ fn get_center_pixel_from_image(image: &CGImage, target_pixels: f64) -> Option<(u
         0.0
     };
     
-    // Taille effective après crop
     // Effective size after crop
     let use_width = if img_width > target_pixels { target_pixels } else { img_width };
     let use_height = if img_height > target_pixels { target_pixels } else { img_height };
     
-    // Le pixel central en X (même convention)
     // Center pixel in X (same convention)
     let center_x = (crop_x + use_width / 2.0).floor() as usize;
     
-    // Le pixel central en Y : convertir de "depuis le bas" vers "depuis le haut"
     // Center pixel in Y: convert from "from bottom" to "from top"
-    // Dans NSImage: le centre est à crop_y_from_bottom + use_height/2 depuis le bas
-    // Dans CGImage: on veut la distance depuis le haut
     // In NSImage: center is at crop_y_from_bottom + use_height/2 from bottom
     // In CGImage: we want distance from top
     let center_y_from_bottom = crop_y_from_bottom + use_height / 2.0;
     let center_y = (img_height - center_y_from_bottom).floor() as usize;
     
-    // Récupère les données brutes de l'image
     // Get raw image data
     let data = image.data();
     let bytes_per_row = image.bytes_per_row() as usize;
     let bits_per_pixel = image.bits_per_pixel() as usize;
     let bytes_per_pixel = bits_per_pixel / 8;
     
-    // Calcule l'offset du pixel central dans les données
     // Calculate center pixel offset in data
     let offset = (center_y * bytes_per_row) + (center_x * bytes_per_pixel);
     
-    // Vérifie qu'on a assez de données
     // Check we have enough data
     let data_len = data.len() as usize;
     if offset + bytes_per_pixel <= data_len {
-        // Les données sont en format BGRA (Blue, Green, Red, Alpha)
         // Data is in BGRA format (Blue, Green, Red, Alpha)
         let b = data[offset];
         let g = data[offset + 1];
         let r = data[offset + 2];
         
-        // Applique la conversion ICC si un profil est sélectionné
         // Apply ICC conversion if a profile is selected
         let (r_out, g_out, b_out) = apply_icc_conversion(r, g, b);
         
@@ -1085,89 +921,75 @@ fn get_center_pixel_from_image(image: &CGImage, target_pixels: f64) -> Option<(u
     }
 }
 
-/// Applique la conversion ICC depuis le profil sélectionné vers sRGB
 /// Applies ICC conversion from selected profile to sRGB
 ///
 /// # Arguments
-/// * `r`, `g`, `b` - Composantes RGB brutes capturées / Raw captured RGB components
+/// * `r`, `g`, `b` - Raw captured RGB components
 ///
 /// # Returns
-/// * `(u8, u8, u8)` - Composantes RGB converties en sRGB / RGB components converted to sRGB
+/// * `(u8, u8, u8)` - RGB components converted to sRGB
 fn apply_icc_conversion(r: u8, g: u8, b: u8) -> (u8, u8, u8) {
-    // Import du module icc pour la conversion
     // Import icc module for conversion
     use crate::icc;
     
-    // Récupère l'espace colorimétrique sélectionné
     // Get the selected color space
     let source_colorspace = icc::get_selected_nscolorspace();
     
-    // Convertit la couleur vers sRGB en utilisant le profil sélectionné
     // Convert color to sRGB using the selected profile
     icc::convert_color_to_srgb(r, g, b, source_colorspace.as_deref())
 }
 
-/// Capture une zone et retourne à la fois l'image et la couleur du pixel central
+/// Captures an area and returns both the image and the center pixel color
 ///
 /// # Arguments
-/// * `x` - Coordonnée X du centre (coordonnées Cocoa en points)
-/// * `y` - Coordonnée Y du centre (coordonnées Cocoa en points)
-/// * `size` - Taille du carré à capturer (en points)
-/// * `target_pixels` - Nombre de pixels cibles pour le crop (utilisé pour trouver le centre)
+/// * `x` - X coordinate of the center (Cocoa coordinates in points)
+/// * `y` - Y coordinate of the center (Cocoa coordinates in points)
+/// * `size` - Size of the square to capture (in points)
+/// * `target_pixels` - Target pixel count for the crop (used to find the center)
 ///
-/// # Retourne
-/// * `Some((CGImage, r, g, b))` - L'image et les composantes RGB du pixel central
-/// * `None` - Si la capture a échoué
+/// # Returns
+/// * `Some((CGImage, r, g, b))` - The image and the RGB components of the center pixel
+/// * `None` - If capture failed
 fn capture_and_get_center_color(x: f64, y: f64, size: f64, target_pixels: f64) -> Option<(CGImage, u8, u8, u8)> {
-    // Capture la zone
+    // Capture the area
     let image = capture_zoom_area(x, y, size)?;
     
-    // Extrait la couleur du pixel central (en tenant compte du crop)
+    // Extract the center pixel color (taking the crop into account)
     let (r, g, b) = get_center_pixel_from_image(&image, target_pixels)?;
     
     Some((image, r, g, b))
 }
 
 // =============================================================================
-// API PUBLIQUE
+// PUBLIC API
 // =============================================================================
 
-/// Flag global pour signaler l'arrêt du picker
 /// Global flag to signal picker stop
 static SHOULD_STOP: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-/// Fonction helper pour arrêter le picker et réafficher le curseur
 /// Helper function to stop the picker and show cursor again
 fn stop_application() {
-    // Signale l'arrêt via le flag atomique
     // Signal stop via the atomic flag
     SHOULD_STOP.store(true, std::sync::atomic::Ordering::SeqCst);
     
-    // Réaffiche le curseur de la souris
     // Show the mouse cursor again
     NSCursor::unhide();
 }
 
-/// Exécute l'application color picker sur macOS
 /// Runs the color picker application on macOS
 ///
 /// # Arguments
-/// * `fg` - Si true, commence en mode foreground. Si false, commence en mode background.
 /// * `fg` - If true, starts in foreground mode. If false, starts in background mode.
 ///
-/// # Retourne / Returns
-/// * `ColorPickerResult` avec foreground et/ou background remplis selon les sélections
+/// # Returns
 /// * `ColorPickerResult` with foreground and/or background filled based on selections
-/// * Les deux champs sont None si l'utilisateur a appuyé ESC pour annuler
 /// * Both fields are None if user pressed ESC to cancel
 pub fn run(fg: bool) -> ColorPickerResult {
-    // Stocke le mode fg dans la variable globale
     // Store the fg mode in the global variable
     if let Ok(mut mode) = FG_MODE.lock() {
         *mode = fg; // Set the display mode (true = top arc, false = bottom arc)
     }
 
-    // Réinitialise les couleurs sélectionnées
     // Reset the selected colors
     if let Ok(mut color) = FG_COLOR.lock() {
         *color = None; // Clear any previously selected foreground color
@@ -1176,62 +998,49 @@ pub fn run(fg: bool) -> ColorPickerResult {
         *color = None; // Clear any previously selected background color
     }
 
-    // Réinitialise le mode continue
     // Reset the continue mode
     if let Ok(mut mode) = CONTINUE_MODE.lock() {
         *mode = false; // Disable continue mode at start
     }
 
-    // Réinitialise le nombre de pixels capturés à la valeur par défaut
     // Reset captured pixels to default value
     if let Ok(mut pixels) = CURRENT_CAPTURED_PIXELS.lock() {
         *pixels = CAPTURED_PIXELS; // Reset to default from config
     }
 
-    // Réinitialise le zoom à la valeur par défaut
     // Reset zoom to default value
     if let Ok(mut zoom) = CURRENT_ZOOM.lock() {
         *zoom = INITIAL_ZOOM_FACTOR; // Reset to default from config
     }
 
-    // Réinitialise le flag d'arrêt
     // Reset the stop flag
     SHOULD_STOP.store(false, std::sync::atomic::Ordering::SeqCst);
 
-    // Récupère le marqueur de thread principal - requis pour les opérations UI
+    // Get main thread marker - required for UI operations
     let mtm = MainThreadMarker::new().expect("Must be called from main thread");
 
-    // Récupère l'instance partagée de l'application
+    // Get the shared application instance
     let app = NSApplication::sharedApplication(mtm);
 
-    // Pendant l'activation du picker, on bascule en Accessory : permet d'activer l'app
-    // sans sortir du Space d'une autre app en plein écran. La policy est
-    // restaurée à Regular en fin de fonction. (Fixes #26)
     // During the picker activation, switch to Accessory: lets us activate the app
     // without leaving the Space of another app's full-screen. The policy is
     // restored to Regular at the end of this function. (Fixes #26)
     app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
 
-    // Crée des fenêtres overlay pour chaque écran
     // Create overlay windows for each screen
     unsafe {
-        // Récupère la liste de tous les écrans via l'API objc2 native
         // Get the list of all screens using native objc2 API
         let screens = NSScreen::screens(mtm); // Returns Retained<NSArray<NSScreen>>
 
-        // Itère sur chaque écran dans le tableau via l'API native
         // Iterate over each screen in the array via native API
         // Note: NSArray doesn't have a get() method in objc2, use objectAtIndex: via msg_send
         let count: usize = screens.count(); // Get the number of screens
         for i in 0..count {
-            // Récupère l'écran à l'index i via objectAtIndex:
             // Get the screen at index i via objectAtIndex:
             let screen: Retained<NSScreen> = msg_send![&*screens, objectAtIndex: i];
-            // Récupère les dimensions de l'écran via l'API objc2 native
             // Get the screen dimensions using native objc2 API
             let frame: NSRect = screen.frame(); // Returns NSRect directly
 
-            // Crée une fenêtre KeyableWindow en utilisant l'API objc2 native
             // Create KeyableWindow using native objc2 API
             // For MainThreadOnly classes, use mtm.alloc::<Class>() pattern
             let window: Retained<KeyableWindow> = {
@@ -1257,12 +1066,9 @@ pub fn run(fg: bool) -> ColorPickerResult {
             // KeyableWindow inherits from NSWindow2 so this cast is safe
             let window_as_nswindow: &NSWindow2 = &window; // Deref coercion to parent class
 
-            // Configure la fenêtre using NSWindow2 methods
             // Configure the window using NSWindow2 methods
             window_as_nswindow.setLevel(1000);                        // Very high level (above everything)
 
-            // Permet à la fenêtre d'apparaître dans tous les Spaces (y compris
-            // ceux des apps en plein écran). 1 = CanJoinAllSpaces, 16 = Stationary,
             // 256 = FullScreenAuxiliary. (Fixes #26)
             // Lets the window show on every Space (including full-screen apps').
             // 1 = CanJoinAllSpaces, 16 = Stationary, 256 = FullScreenAuxiliary. (Fixes #26)
@@ -1276,23 +1082,17 @@ pub fn run(fg: bool) -> ColorPickerResult {
             window_as_nswindow.setIgnoresMouseEvents(false);          // Receives mouse events
             window_as_nswindow.setAcceptsMouseMovedEvents(true);      // Receives mouseMoved
             
-            // CORRECTION DOUBLE-CLIC : Configure la fenêtre pour accepter le premier clic
             // DOUBLE-CLICK FIX: Configure window to accept first mouse click
-            // Sans cette configuration, le premier clic active simplement la fenêtre,
-            // et un second clic est nécessaire pour déclencher l'action
             // Without this, the first click just activates the window,
             // and a second click is needed to trigger the action
-            // Note: setAcceptsFirstMouse n'est pas disponible via objc2-app-kit,
-            //       mais makeKeyAndOrderFront + hidesOnDeactivate règle le problème
             // Note: setAcceptsFirstMouse is not available via objc2-app-kit,
             //       but makeKeyAndOrderFront + hidesOnDeactivate solves the issue
-            window_as_nswindow.setHidesOnDeactivate(false);           // Ne se cache pas quand désactivée
+            window_as_nswindow.setHidesOnDeactivate(false);           // Does not hide when deactivated
             
             // Disable window content sharing (prevents screen capture of this window)
             // NSWindowSharingType: 0 = None, 1 = ReadOnly, 2 = ReadWrite
             window_as_nswindow.setSharingType(NSWindowSharingType(0));
 
-            // Crée la vue ColorPickerView en utilisant l'API objc2 native
             // Create ColorPickerView using native objc2 API
             // For MainThreadOnly classes, use mtm.alloc::<Class>() pattern
             let view: Retained<ColorPickerView> = {
@@ -1309,21 +1109,15 @@ pub fn run(fg: bool) -> ColorPickerResult {
             // ColorPickerView inherits from NSView so this cast is safe
             let view_as_nsview: &NSView = &view; // Deref coercion to parent class
 
-            // CORRECTION CLIGNOTEMENT : Active le layer-backing pour un rendu fluide
             // FLICKER FIX: Enable layer-backing for smooth rendering
-            // Le layer-backing utilise Core Animation pour un double-buffering automatique
             // Layer-backing uses Core Animation for automatic double-buffering
             view_as_nsview.setWantsLayer(true);
             
-            // La vue est opaque (pas de transparence dans la vue elle-même)
             // The view is opaque (no transparency in the view itself)
-            // Cela permet à AppKit d'optimiser le rendu
             // This allows AppKit to optimize rendering
-            // Note: L'overlay semi-transparent est dessiné DANS la vue, la vue elle-même est opaque
             // Note: The semi-transparent overlay is drawn INSIDE the view, the view itself is opaque
             let _: () = msg_send![view_as_nsview, setOpaque: Bool::YES];
 
-            // Configure la fenêtre avec la vue
             // Configure the window with the view
             window_as_nswindow.setContentView(Some(view_as_nsview));  // Set the content view
             window_as_nswindow.makeKeyAndOrderFront(None);            // Show and bring to front
@@ -1331,32 +1125,27 @@ pub fn run(fg: bool) -> ColorPickerResult {
         } // End of for loop
     } // End of unsafe block
 
-    // Active l'application en utilisant l'API objc2 native
+    // Activate the application using native objc2 API
     {
-        // Récupère l'instance de l'application en cours d'exécution
+        // Get the running application instance
         let running_app = NSRunningApplication::currentApplication();
-        // Active l'application avec les options par défaut (vide = activation standard)
+        // Activate the application with default options (empty = standard activation)
         running_app.activateWithOptions(NSApplicationActivationOptions::empty());
     }
 
-    // Initialise MOUSE_STATE avec la position actuelle de la souris
     // Initialize MOUSE_STATE with the current mouse position
     {
         use core_graphics::event::CGEvent;
         use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
         
-        // Récupère la position actuelle de la souris via Core Graphics
         // Get current mouse position via Core Graphics
         if let Ok(source) = CGEventSource::new(CGEventSourceStateID::HIDSystemState) {
             let cg_event = CGEvent::new(source);
             if let Ok(event) = cg_event {
-                // CGEvent.location() retourne des coordonnées en POINTS (Global Display Coordinates)
-                // avec l'origine en haut à gauche
                 // CGEvent.location() returns coordinates in POINTS (Global Display Coordinates)
                 // with origin at top-left
                 let cg_point = event.location();
                 
-                // Récupère le scale factor et la hauteur en points
                 // Get the scale factor and height in points
                 let scale_factor = if let Some(main_screen) = NSScreen::mainScreen(mtm) {
                     main_screen.backingScaleFactor()
@@ -1371,26 +1160,21 @@ pub fn run(fg: bool) -> ColorPickerResult {
                     main_display.pixels_high() as f64 / scale_factor
                 };
                 
-                // Convertit CG (origine en haut) vers Cocoa (origine en bas)
                 // Convert CG (origin at top) to Cocoa (origin at bottom)
                 let cocoa_x = cg_point.x;
                 let cocoa_y = screen_height_points - cg_point.y;
                 
-                // Récupère le nombre de pixels capturés pour la taille de capture
                 // Get captured pixels count for capture size
                 let captured_pixels = match CURRENT_CAPTURED_PIXELS.lock() {
                     Ok(p) => *p,
                     Err(_) => CAPTURED_PIXELS,
                 };
                 
-                // Taille de capture en points (ajustée pour Retina)
                 // Capture size in points (adjusted for Retina)
                 let capture_size = captured_pixels / scale_factor;
                 
-                // Capture la zone et extrait la couleur du pixel central
                 // Capture the area and extract the center pixel color
                 if let Some((_image, r, g, b)) = capture_and_get_center_color(cocoa_x, cocoa_y, capture_size, captured_pixels) {
-                    // Utilise format_hex_color du module common
                     // Uses format_hex_color from common module
                     let hex_color = format_hex_color(r, g, b);
                     
@@ -1398,10 +1182,10 @@ pub fn run(fg: bool) -> ColorPickerResult {
                     // Initialize MOUSE_STATE
                     if let Ok(mut state) = MOUSE_STATE.lock() {
                         *state = Some(MouseColorInfo {
-                            x: cocoa_x,        // Position X dans les coordonnées de la fenêtre
-                            y: cocoa_y,        // Position Y dans les coordonnées de la fenêtre
-                            screen_x: cocoa_x, // Position X dans les coordonnées de l'écran
-                            screen_y: cocoa_y, // Position Y dans les coordonnées de l'écran
+                            x: cocoa_x,        // X position in window coordinates
+                            y: cocoa_y,        // Y position in window coordinates
+                            screen_x: cocoa_x, // X position in screen coordinates
+                            screen_y: cocoa_y, // Y position in screen coordinates
                             r,
                             g,
                             b,
@@ -1414,16 +1198,14 @@ pub fn run(fg: bool) -> ColorPickerResult {
         }
     }
 
-    // Cache le curseur de la souris
+    // Hide the mouse cursor
     NSCursor::hide();
 
-    // Boucle d'événements personnalisée (au lieu de app.run() qui fermerait Tauri)
     // Custom event loop (instead of app.run() which would close Tauri)
     unsafe {
         use objc2_foundation::NSDate;
 
         while !SHOULD_STOP.load(std::sync::atomic::Ordering::SeqCst) {
-            // Timeout court pour vérifier le flag régulièrement
             // Short timeout to check the flag regularly
             let timeout: Retained<NSDate> = msg_send![
                 NSDate::class(),
@@ -1445,7 +1227,6 @@ pub fn run(fg: bool) -> ColorPickerResult {
         }
     }
 
-    // Ferme toutes les fenêtres de l'application qui sont au niveau 1000 (nos fenêtres picker)
     // Close all application windows that are at level 1000 (our picker windows)
     unsafe {
         let windows = app.windows();
@@ -1458,11 +1239,9 @@ pub fn run(fg: bool) -> ColorPickerResult {
         }
     }
 
-    // Restaure la policy normale (Fixes #26)
     // Restore the regular policy (Fixes #26)
     app.setActivationPolicy(NSApplicationActivationPolicy::Regular);
 
-    // Récupère les couleurs sélectionnées
     // Get the selected colors
     let fg_color = if let Ok(color) = FG_COLOR.lock() {
         color.clone() // Clone the Option<(u8, u8, u8)>
@@ -1476,7 +1255,6 @@ pub fn run(fg: bool) -> ColorPickerResult {
         None // Return None if lock fails
     };
 
-    // Récupère l'état du mode continue
     // Get the continue mode state
     let was_continue_mode = if let Ok(mode) = CONTINUE_MODE.lock() {
         *mode // Copy the boolean value
@@ -1484,7 +1262,6 @@ pub fn run(fg: bool) -> ColorPickerResult {
         false // Default to false if lock fails
     };
 
-    // Construit le résultat avec les deux couleurs et le mode continue
     // Build the result with both colors and continue mode
     ColorPickerResult {
         foreground: fg_color,       // Foreground color (may be None)
@@ -1494,89 +1271,82 @@ pub fn run(fg: bool) -> ColorPickerResult {
 }
 
 // =============================================================================
-// DESSIN
+// DRAWING
 // =============================================================================
 
-/// Fonction principale de dessin appelée depuis drawRect de ColorPickerView
+/// Main drawing function called from ColorPickerView's drawRect
 ///
-/// Cette fonction dessine:
-/// 1. Un overlay semi-transparent sur tout l'écran
-/// 2. La loupe circulaire avec les pixels agrandis
-/// 3. Le réticule central
-/// 4. La bordure colorée
-/// 5. Le texte hexadécimal en arc
+/// This function draws:
+/// 1. A semi-transparent overlay over the whole screen
+/// 2. The circular magnifier with the enlarged pixels
+/// 3. The central reticle
+/// 4. The colored border
+/// 5. The hexadecimal text on an arc
 fn draw_view(view: &NSView) {
     // -------------------------------------------------------------------------
-    // Dessine l'overlay semi-transparent
+    // Draw the semi-transparent overlay
     // -------------------------------------------------------------------------
-    // Crée une couleur noire avec 5% d'opacité
+    // Create a black color with 5% opacity
     let overlay_color = NSColor::colorWithCalibratedWhite_alpha(0.0, 0.0);
-    // Définit comme couleur de remplissage
+    // Set as fill color
     overlay_color.set();
 
-    // Récupère les limites de la vue
+    // Get the view bounds
     let bounds: NSRect = view.bounds();
-    // Crée un chemin rectangulaire couvrant toute la vue
+    // Create a rectangular path covering the whole view
     let bounds_path = NSBezierPath::bezierPathWithRect(bounds);
-    // Remplit avec la couleur overlay
+    // Fill with the overlay color
     bounds_path.fill();
 
     // -------------------------------------------------------------------------
-    // Dessine la loupe si on a des informations sur la souris
     // Draw the magnifier if we have mouse information
     // -------------------------------------------------------------------------
     if let Ok(state) = MOUSE_STATE.lock() {
         if let Some(ref info) = *state {
-            // CORRECTION MULTI-ÉCRAN : Vérifie si le curseur est dans l'écran de cette fenêtre
             // MULTI-SCREEN FIX: Check if cursor is in this window's screen
             let should_draw_magnifier = if let Some(window) = view.window() {
                 if let Some(screen) = window.screen() {
                     let screen_frame = screen.frame();
-                    // Vérifie si la position du curseur est dans ce cadre d'écran
                     // Check if cursor position is within this screen frame
                     info.screen_x >= screen_frame.origin.x
                         && info.screen_x <= screen_frame.origin.x + screen_frame.size.width
                         && info.screen_y >= screen_frame.origin.y
                         && info.screen_y <= screen_frame.origin.y + screen_frame.size.height
                 } else {
-                    true // Fallback: dessine si on ne peut pas déterminer l'écran
-                         // Fallback: draw if we can't determine the screen
+                    true // Fallback: draw if we can't determine the screen
                 }
             } else {
-                true // Fallback: dessine si on ne peut pas obtenir la fenêtre
-                     // Fallback: draw if we can't get the window
+                true // Fallback: draw if we can't get the window
             };
 
-            // Ne dessine la loupe que si le curseur est dans cet écran
             // Only draw magnifier if cursor is in this screen
             if should_draw_magnifier {
-            // Récupère le zoom actuel
+            // Get the current zoom
             let current_zoom = match CURRENT_ZOOM.lock() {
                 Ok(z) => *z,
                 Err(_) => INITIAL_ZOOM_FACTOR,
             };
 
-            // Récupère le nombre de pixels capturés actuel
             // Get the current captured pixels count
             let captured_pixels = match CURRENT_CAPTURED_PIXELS.lock() {
                 Ok(p) => *p,
                 Err(_) => CAPTURED_PIXELS, // Fallback to default constant
             };
 
-            // Calcule la taille de la loupe à afficher
-            // mag_size = nombre de pixels capturés × facteur de zoom
+            // Calculate the magnifier size to display
+            // mag_size = captured pixels count × zoom factor
             let mag_size = captured_pixels * current_zoom;
-            // Taille de capture ajustée pour le facteur d'échelle Retina
+            // Capture size adjusted for the Retina scale factor
             let capture_size = captured_pixels / info.scale_factor;
 
-            // Capture la zone de pixels autour du curseur
+            // Capture the pixel area around the cursor
             if let Some(cg_image) = capture_zoom_area(info.screen_x, info.screen_y, capture_size) {
-                // Dimensions de l'image capturée
+                // Captured image dimensions
                 let img_width = cg_image.width() as f64;
                 let img_height = cg_image.height() as f64;
                 let target_pixels = captured_pixels;
 
-                // Calcule le décalage pour centrer le recadrage
+                // Calculate the offset to center the crop
                 let crop_x = if img_width > target_pixels {
                     ((img_width - target_pixels) / 2.0).floor()
                 } else {
@@ -1588,13 +1358,12 @@ fn draw_view(view: &NSView) {
                     0.0
                 };
 
-                // Taille effective à utiliser
+                // Effective size to use
                 let use_width = if img_width > target_pixels { target_pixels } else { img_width };
                 let use_height = if img_height > target_pixels { target_pixels } else { img_height };
 
                 unsafe {
                     // -------------------------------------------------------------
-                    // Crée une NSImage à partir de CGImage
                     // Create an NSImage from CGImage
                     // Note: initWithCGImage:size: is not directly available in objc2-app-kit,
                     // so we use raw msg_send! with proper type handling
@@ -1643,48 +1412,39 @@ fn draw_view(view: &NSView) {
                         .expect("NSImage initWithCGImage:size: returned nil");
                     let cropped_size = NSSize::new(use_width, use_height); // Size to use after cropping
 
-                    // Calcule la position de la loupe (centrée sur le curseur)
                     // Calculate magnifier position (centered on cursor)
                     let mag_x = info.x - mag_size / 2.0;                  // X position
                     let mag_y = info.y - mag_size / 2.0;                  // Y position
 
-                    // Rectangle destination pour la loupe
                     // Destination rectangle for the magnifier
                     let mag_rect = NSRect::new(
                         NSPoint::new(mag_x, mag_y),     // Origin point
                         NSSize::new(mag_size, mag_size) // Size (square)
                     );
 
-                    // Crée un chemin circulaire pour le clip
                     // Create a circular path for clipping
                     let circular_clip = NSBezierPath::bezierPathWithOvalInRect(mag_rect);
 
                     // -------------------------------------------------------------
-                    // Dessine l'image dans le cercle
                     // Draw the image inside the circle
                     // -------------------------------------------------------------
-                    // Sauvegarde l'état graphique actuel
                     // Save current graphics state
                     NSGraphicsContext::saveGraphicsState_class();
 
-                    // Désactive l'interpolation pour un rendu pixelisé
                     // Disable interpolation for pixelated rendering
                     if let Some(graphics_context) = NSGraphicsContext::currentContext() {
                         graphics_context.setImageInterpolation(objc2_app_kit::NSImageInterpolation::None);
                     }
 
-                    // Applique le clip circulaire
                     // Apply the circular clip
                     circular_clip.addClip();
 
-                    // Rectangle source dans l'image
                     // Source rectangle in the image (defines the portion to draw from)
                     let from_rect = NSRect::new(
                         NSPoint::new(crop_x, crop_y), // Origin of source rectangle
                         cropped_size                   // Size of source rectangle
                     );
 
-                    // Dessine l'image using objc2 msg_send!
                     // Draw the image from source rect to destination rect
                     // Use NSImage's drawInRect:fromRect:operation:fraction: method
                     // operation: 2 = NSCompositingOperationSourceOver (standard alpha blending)
@@ -1698,62 +1458,51 @@ fn draw_view(view: &NSView) {
                         fraction: 1.0_f64
                     ];
 
-                    // Restaure l'état graphique
                     // Restore graphics state
                     NSGraphicsContext::restoreGraphicsState_class();
 
                     // -------------------------------------------------------------
-                    // Dessine le réticule central
                     // Draw the central reticle
                     // -------------------------------------------------------------
-                    // Centre de la loupe
                     // Center of the magnifier
                     let center_x = mag_x + mag_size / 2.0;
                     let center_y = mag_y + mag_size / 2.0;
 
-                    // Taille du réticule: FIXE, basée uniquement sur current_zoom
                     // Reticle size: FIXED, based only on current_zoom
                     let reticle_size = current_zoom;
                     let half_reticle = reticle_size / 2.0;
 
-                    // Le réticule est toujours centré dans la loupe
                     // The reticle is always centered in the magnifier
                     let reticle_center_x = center_x;
                     let reticle_center_y = center_y;
 
-                    // Rectangle du réticule
                     // Reticle rectangle
                     let square_rect = NSRect::new(
                         NSPoint::new(reticle_center_x - half_reticle, reticle_center_y - half_reticle),
                         NSSize::new(reticle_size, reticle_size)
                     );
 
-                    // Couleur grise pour le réticule
                     // Gray color for the reticle
                     let gray_color = NSColor::colorWithCalibratedRed_green_blue_alpha(0.5, 0.5, 0.5, 1.0);
                     gray_color.setStroke();
 
-                    // Dessine le carré du réticule
                     // Draw the reticle square
                     let reticle_path = NSBezierPath::bezierPathWithRect(square_rect);
                     reticle_path.setLineWidth(1.0);
                     reticle_path.stroke();
                     
-                    // Garde use_width pour référence si nécessaire
                     // Keep use_width for reference if needed
                     let _actual_pixels = use_width;
 
                     // -------------------------------------------------------------
-                    // Dessine la bordure colorée (arc haut ou bas selon fg_mode)
                     // Draw the colored border (top or bottom arc based on fg_mode)
                     // -------------------------------------------------------------
-                    // Parse la couleur hex actuelle
-                    let hex = &info.hex_color[1..]; // Enlève le # / Remove the #
+                    // Parse the current hex color
+                    let hex = &info.hex_color[1..]; // Remove the #
                     let r_val = u8::from_str_radix(&hex[0..2], 16).unwrap_or(0) as f64 / 255.0; // Red component
                     let g_val = u8::from_str_radix(&hex[2..4], 16).unwrap_or(0) as f64 / 255.0; // Green component
                     let b_val = u8::from_str_radix(&hex[4..6], 16).unwrap_or(0) as f64 / 255.0; // Blue component
 
-                    // Récupère le mode fg depuis la variable globale
                     // Get the fg mode from the global variable
                     let fg_mode = if let Ok(mode) = FG_MODE.lock() {
                         *mode // Copy the boolean value
@@ -1761,7 +1510,6 @@ fn draw_view(view: &NSView) {
                         true // Default to top arc if lock fails
                     };
                     
-                    // Récupère le mode continue
                     // Get continue mode
                     let is_continue_mode = if let Ok(mode) = CONTINUE_MODE.lock() {
                         *mode
@@ -1769,7 +1517,6 @@ fn draw_view(view: &NSView) {
                         false
                     };
                     
-                    // Récupère les couleurs déjà capturées
                     // Get already captured colors
                     let captured_fg = if let Ok(color) = FG_COLOR.lock() {
                         *color
@@ -1782,31 +1529,23 @@ fn draw_view(view: &NSView) {
                         None
                     };
 
-                    // Rayon du cercle de bordure (centre de l'épaisseur de la bordure)
                     // Radius of the border circle (center of the border thickness)
-                    // On soustrait 0.5px pour que le bord intérieur chevauche légèrement la loupe
                     // Subtract 0.5px so the inner edge slightly overlaps the magnifier
                     let border_radius = mag_size / 2.0 + BORDER_WIDTH / 2.0 - 0.5;
 
-                    // En mode continue, dessine d'abord l'arc de la couleur déjà capturée (si elle existe)
                     // In continue mode, first draw the arc for the already captured color (if it exists)
                     if is_continue_mode {
-                        // Si on est en mode fg (arc du haut), dessiner la couleur bg capturée en bas
                         // If we're in fg mode (top arc), draw the captured bg color at bottom
-                        // Si on est en mode bg (arc du bas), dessiner la couleur fg capturée en haut
                         // If we're in bg mode (bottom arc), draw the captured fg color at top
                         let (captured_color, captured_start, captured_end) = if fg_mode {
-                            // On capture fg (haut), donc afficher bg capturé (bas) si existant
                             // Capturing fg (top), so show captured bg (bottom) if exists
                             (captured_bg, 180.0_f64, 360.0_f64)
                         } else {
-                            // On capture bg (bas), donc afficher fg capturé (haut) si existant
                             // Capturing bg (bottom), so show captured fg (top) if exists
                             (captured_fg, 0.0_f64, 180.0_f64)
                         };
                         
                         if let Some((cap_r, cap_g, cap_b)) = captured_color {
-                            // Dessine l'arc de la couleur capturée
                             // Draw the arc for the captured color
                             let cap_r_val = cap_r as f64 / 255.0;
                             let cap_g_val = cap_g as f64 / 255.0;
@@ -1831,20 +1570,15 @@ fn draw_view(view: &NSView) {
                         }
                     }
 
-                    // Couleur de la bordure = couleur du pixel actuel
                     // Border color = current pixel color
                     let border_color = NSColor::colorWithCalibratedRed_green_blue_alpha(r_val, g_val, b_val, 1.0);
                     border_color.setStroke(); // Set as stroke color
 
-                    // Crée le chemin pour l'arc actuel (haut ou bas selon fg_mode)
                     // Create the path for the current arc (top or bottom based on fg_mode)
                     let arc_path = NSBezierPath::bezierPath(); // Create empty bezier path
                     
-                    // Angles pour les arcs (en degrés, sens anti-horaire depuis l'axe X positif)
                     // Angles for arcs (in degrees, counter-clockwise from positive X axis)
-                    // Arc du haut: de 0° à 180° (demi-cercle supérieur)
                     // Top arc: from 0° to 180° (upper half-circle)
-                    // Arc du bas: de 180° à 360° (demi-cercle inférieur)
                     // Bottom arc: from 180° to 360° (lower half-circle)
                     let (start_angle, end_angle) = if fg_mode {
                         (0.0_f64, 180.0_f64) // Top arc (foreground)
@@ -1852,10 +1586,8 @@ fn draw_view(view: &NSView) {
                         (180.0_f64, 360.0_f64) // Bottom arc (background)
                     };
 
-                    // Ajoute l'arc au chemin
                     // Add the arc to the path
                     // appendBezierPathWithArcWithCenter:radius:startAngle:endAngle:clockwise:
-                    // Note: Dans Cocoa, clockwise=NO signifie sens anti-horaire (sens mathématique positif)
                     // Note: In Cocoa, clockwise=NO means counter-clockwise (positive mathematical direction)
                     let _: () = msg_send![
                         &*arc_path,
@@ -1869,23 +1601,20 @@ fn draw_view(view: &NSView) {
                     arc_path.setLineWidth(BORDER_WIDTH); // Set the line width
                     arc_path.stroke(); // Draw the arc
 
-                    // Crée la police système pour le texte
                     // Create system font for text
                     let font: Retained<NSFont> = NSFont::systemFontOfSize(HEX_FONT_SIZE);
 
                     // -------------------------------------------------------------
-                    // Dessine le texte en arc pour l'arc de la couleur capturée (si existe)
                     // Draw arc text for the captured color arc (if exists)
                     // -------------------------------------------------------------
                     if is_continue_mode {
                         let (captured_color_for_text, captured_fg_mode_for_text) = if fg_mode {
-                            (captured_bg, false) // On affiche bg en bas
+                            (captured_bg, false) // Show bg at bottom
                         } else {
-                            (captured_fg, true) // On affiche fg en haut
+                            (captured_fg, true) // Show fg at top
                         };
                         
                         if let Some((cap_r, cap_g, cap_b)) = captured_color_for_text {
-                            // Utilise format_labeled_hex_color du module common
                             // Uses format_labeled_hex_color from common module
                             let cap_label = if captured_fg_mode_for_text {
                                 format_labeled_hex_color("Foreground", cap_r, cap_g, cap_b)
@@ -1893,9 +1622,7 @@ fn draw_view(view: &NSView) {
                                 format_labeled_hex_color("Background", cap_r, cap_g, cap_b)
                             };
                             
-                            // Couleur du texte basée sur la luminance de la couleur capturée
                             // Text color based on captured color luminance
-                            // Utilise should_use_dark_text du module common
                             // Uses should_use_dark_text from common module
                             let cap_text_color = if should_use_dark_text(cap_r, cap_g, cap_b) {
                                 NSColor::colorWithCalibratedRed_green_blue_alpha(0.0, 0.0, 0.0, 1.0)
@@ -1903,7 +1630,7 @@ fn draw_view(view: &NSView) {
                                 NSColor::colorWithCalibratedRed_green_blue_alpha(1.0, 1.0, 1.0, 1.0)
                             };
                             
-                            // Dessine le texte de la couleur capturée (sans badge C)
+                            // Draw the captured color text (without C badge)
                             draw_arc_text(
                                 &cap_label,
                                 center_x, center_y,
@@ -1911,18 +1638,15 @@ fn draw_view(view: &NSView) {
                                 captured_fg_mode_for_text,
                                 &font,
                                 &cap_text_color,
-                                false, // Pas de badge C pour la couleur capturée
+                                false, // No C badge for the captured color
                             );
                         }
                     }
 
                     // -------------------------------------------------------------
-                    // Dessine le texte hexadécimal en arc (haut ou bas selon fg_mode)
                     // Draw the hex text on arc (top or bottom based on fg_mode)
                     // -------------------------------------------------------------
-                    // Couleur du texte basée sur la luminance
                     // Text color based on luminance
-                    // Utilise should_use_dark_text du module common
                     // Uses should_use_dark_text from common module
                     let text_color = if should_use_dark_text(info.r, info.g, info.b) {
                         NSColor::colorWithCalibratedRed_green_blue_alpha(0.0, 0.0, 0.0, 1.0)
@@ -1930,9 +1654,7 @@ fn draw_view(view: &NSView) {
                         NSColor::colorWithCalibratedRed_green_blue_alpha(1.0, 1.0, 1.0, 1.0)
                     };
 
-                    // Construit le texte avec label Foreground/Background
                     // Build text with Foreground/Background label
-                    // Utilise format_labeled_hex_color du module common
                     // Uses format_labeled_hex_color from common module
                     let label = if fg_mode {
                         format_labeled_hex_color("Foreground", info.r, info.g, info.b)
@@ -1940,7 +1662,7 @@ fn draw_view(view: &NSView) {
                         format_labeled_hex_color("Background", info.r, info.g, info.b)
                     };
                     
-                    // Dessine le texte de la couleur actuelle (avec badge C si mode continue)
+                    // Draw the current color text (with C badge if continue mode)
                     draw_arc_text(
                         &label,
                         center_x, center_y,
@@ -1948,26 +1670,25 @@ fn draw_view(view: &NSView) {
                         fg_mode,
                         &font,
                         &text_color,
-                        is_continue_mode, // Badge C si mode continue activé
+                        is_continue_mode, // C badge if continue mode enabled
                     );
-                } // Fin du bloc unsafe / End of unsafe block
-            } // Fin du if let Some(cg_image) / End of if let Some(cg_image)
-            } // Fin du if should_draw_magnifier / End of if should_draw_magnifier
-        } // Fin du if let Some(ref info) / End of if let Some(ref info)
+                } // End of unsafe block
+            } // End of if let Some(cg_image)
+            } // End of if should_draw_magnifier
+        } // End of if let Some(ref info)
     }
 }
 
-/// Dessine du texte en arc autour d'un cercle
 /// Draw text along an arc around a circle
 ///
 /// # Arguments
-/// * `text` - Le texte à dessiner
-/// * `center_x`, `center_y` - Centre du cercle
-/// * `radius` - Rayon de l'arc de texte
-/// * `is_top_arc` - true pour arc du haut, false pour arc du bas
-/// * `font` - Police à utiliser
-/// * `text_color` - Couleur du texte
-/// * `show_badge` - Afficher le badge "C" à la fin
+/// * `text` - The text to draw
+/// * `center_x`, `center_y` - Center of the circle
+/// * `radius` - Radius of the text arc
+/// * `is_top_arc` - true for top arc, false for bottom arc
+/// * `font` - Font to use
+/// * `text_color` - Text color
+/// * `show_badge` - Show the "C" badge at the end
 fn draw_arc_text(
     text: &str,
     center_x: f64,
@@ -1981,20 +1702,16 @@ fn draw_arc_text(
     use objc2_foundation::NSDictionary;
     use objc2::runtime::AnyObject;
     
-    // Nombre de caractères + espace pour badge si nécessaire
     // Character count + space for badge if needed
     let badge_extra_chars = if show_badge { 2.0 } else { 0.0 };
     let char_count = text.len() as f64 + badge_extra_chars;
     
-    // Calcule l'angle entre chaque caractère
     // Calculate angle between each character
     let angle_step = CHAR_SPACING_PIXELS / radius;
     
-    // Arc total occupé par le texte
     // Total arc occupied by text
     let total_arc = angle_step * (char_count - 1.0);
     
-    // Angle de départ selon l'arc (haut ou bas)
     // Start angle based on arc (top or bottom)
     let text_start_angle: f64 = if is_top_arc {
         std::f64::consts::PI / 2.0 + total_arc / 2.0
@@ -2002,18 +1719,14 @@ fn draw_arc_text(
         -std::f64::consts::PI / 2.0 - total_arc / 2.0
     };
 
-    // Sauvegarde l'état graphique
     // Save graphics state
     NSGraphicsContext::saveGraphicsState_class();
 
-    // Index de caractère courant
     // Current character index
     let mut char_index: f64 = 0.0;
 
-    // Dessine chaque caractère du texte
     // Draw each character of the text
     for c in text.chars() {
-        // Angle pour ce caractère
         // Angle for this character
         let angle = if is_top_arc {
             text_start_angle - angle_step * char_index
@@ -2023,17 +1736,14 @@ fn draw_arc_text(
 
         char_index += 1.0;
 
-        // Position sur l'arc
         // Position on the arc
         let char_x = center_x + radius * angle.cos();
         let char_y = center_y + radius * angle.sin();
 
-        // Convertit le caractère en NSString
         // Convert character to NSString
         let char_str = c.to_string();
         let ns_char = NSString::from_str(&char_str);
 
-        // Crée le dictionnaire d'attributs pour le texte
         // Create the attribute dictionary for text
         let font_attr_key = NSString::from_str("NSFont");
         let color_attr_key = NSString::from_str("NSColor");
@@ -2046,16 +1756,13 @@ fn draw_arc_text(
         };
         let attributes = NSDictionary::from_slices(keys, values);
 
-        // Mesure la taille du caractère
         // Measure character size
         let char_size: NSSize = unsafe { ns_char.sizeWithAttributes(Some(&attributes)) };
 
-        // Crée une transformation pour positionner et tourner le caractère
         // Create a transform to position and rotate the character
         let transform = NSAffineTransform::transform();
         transform.translateXBy_yBy(char_x, char_y);
 
-        // Rotation selon l'arc
         // Rotation based on arc
         let rotation_angle = if is_top_arc {
             angle - std::f64::consts::PI / 2.0
@@ -2065,26 +1772,21 @@ fn draw_arc_text(
         transform.rotateByRadians(rotation_angle);
         transform.concat();
 
-        // Dessine le caractère centré
         // Draw the character centered
         let draw_point = NSPoint::new(-char_size.width / 2.0, -char_size.height / 2.0);
         unsafe { ns_char.drawAtPoint_withAttributes(draw_point, Some(&attributes)) };
 
-        // Inverse la transformation
         // Invert the transform
         let inverse = transform.copy();
         inverse.invert();
         inverse.concat();
     }
 
-    // Dessine le badge "C" à la fin si demandé
     // Draw the "C" badge at the end if requested
     if show_badge {
-        // Avance d'un espace
         // Advance by one space
         char_index += 1.0;
         
-        // Angle pour le badge (après le texte)
         // Angle for the badge (after the text)
         let badge_angle = if is_top_arc {
             text_start_angle - angle_step * char_index
@@ -2092,16 +1794,13 @@ fn draw_arc_text(
             text_start_angle + angle_step * char_index
         };
 
-        // Position du badge sur l'arc
         // Badge position on the arc
         let badge_x = center_x + radius * badge_angle.cos();
         let badge_y = center_y + radius * badge_angle.sin();
 
-        // Taille du badge
         // Badge size
         let badge_radius = HEX_FONT_SIZE * 0.7;
 
-        // Dessine le cercle rouge de fond
         // Draw the red background circle
         let badge_rect = NSRect::new(
             NSPoint::new(badge_x - badge_radius, badge_y - badge_radius),
@@ -2112,7 +1811,6 @@ fn draw_arc_text(
         let badge_circle = NSBezierPath::bezierPathWithOvalInRect(badge_rect);
         badge_circle.fill();
 
-        // Dessine la lettre "C" en blanc
         // Draw the letter "C" in white
         let white_color = NSColor::colorWithCalibratedRed_green_blue_alpha(1.0, 1.0, 1.0, 1.0);
         let ns_c = NSString::from_str("C");
@@ -2149,7 +1847,6 @@ fn draw_arc_text(
         badge_inverse.concat();
     }
 
-    // Restaure l'état graphique
     // Restore graphics state
     NSGraphicsContext::restoreGraphicsState_class();
 }

@@ -1,13 +1,10 @@
 // =============================================================================
-// colors/hsv.ts - Format HSV ("hsv(h, s%, v%)")
 // colors/hsv.ts - HSV format ("hsv(h, s%, v%)")
 // =============================================================================
 
 import type { ColorFormat, ColorCommit } from './types';
 import { ALPHA_TAIL, alphaArgs } from './alpha';
 
-// Accepte "hsv(h, s%, v%)" et l'alias "hsva(...)" (le signe % est optionnel),
-// avec un alpha optionnel
 // Accepts "hsv(h, s%, v%)" and the "hsva(...)" alias (the % sign is optional),
 // with an optional alpha
 const HSV_RE = new RegExp(
@@ -15,14 +12,10 @@ const HSV_RE = new RegExp(
   'i',
 );
 
-// Teinte 0-360, saturation et valeur 0-100.
 // Hue 0-360, saturation and value 0-100.
 const inHue = (n: number) => n >= 0 && n <= 360;
 const inPercent = (n: number) => n >= 0 && n <= 100;
 
-// HSV [h:0-360, s:0-100, v:0-100] → chaîne CSS via hsl(), car CSS n'a pas de
-// fonction hsv(). Retourne la couleur en valeur css.
-//
 // HSV [h:0-360, s:0-100, v:0-100] → CSS string via hsl(), since CSS has no hsv()
 // function. Return color in css value
 export function hsvToCss(v: number[]): string {
@@ -33,8 +26,6 @@ export function hsvToCss(v: number[]): string {
   return `hsl(${v[0]}, ${Math.round(sl * 100)}%, ${Math.round(l * 100)}%)`;
 }
 
-// Extrait et valide h, s, v
-//
 // Extracts and validates h, s, v
 export const hsvFormat: ColorFormat = {
   id: 'hsv',
@@ -47,11 +38,9 @@ export const hsvFormat: ColorFormat = {
     const s = parseInt(match[2], 10);
     const v = parseInt(match[3], 10);
 
-    // Rejette toute composante hors intervalle (teinte 0-360, s/v 0-100).
     // Reject any component out of range (hue 0-360, s/v 0-100).
     if (!inHue(h) || !inPercent(s) || !inPercent(v)) return null;
 
-    // Alpha optionnel (virgule ou slash)
     // Optional alpha (comma or slash)
     const alpha = alphaArgs(match[4]);
     if (alpha === null) return null;
