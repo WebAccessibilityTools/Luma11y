@@ -84,6 +84,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        # Key generated without a password: the variable must exist but be empty
+        # (unset, tauri-bundler assumes a password is required and fails).
+        TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
       with:
         tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
         releaseName: 'v__VERSION__'
