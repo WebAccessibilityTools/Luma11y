@@ -283,6 +283,8 @@
         </div>
         <div class="section">
           <p class="update-status" role="status" aria-live="polite" x-text="$store.settings.updateStatusText()"></p>
+          <div class="update-notes" x-show="$store.settings.updateState === 'available' && $store.settings.update?.body"
+               x-html="$store.settings.updateNotesHtml()"></div>
           <div class="update-actions">
             <button type="button" class="btn-secondary" x-show="$store.settings.updateState !== 'available'"
               :disabled="$store.settings.updateState === 'checking'"

@@ -65,6 +65,18 @@ jobs:
     - name: Install frontend dependencies
       run: pnpm install
 
+    # `notes` of latest.json = the section of the committed CHANGELOG.md for this version
+    # (hand-edited git-cliff output), falling back to the [unreleased] section.
+    - name: Release notes from CHANGELOG.md
+      id: notes
+      shell: bash
+      run: |
+        VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+        section() { awk -v h="## [$1]" 'index($0, "## [") == 1 { p = (index($0, h) == 1) } p' CHANGELOG.md | sed '1d'; }
+        NOTES=$(section "$VERSION")
+        [ -n "$NOTES" ] || NOTES=$(section unreleased)
+        { echo 'body<<NOTES_EOF'; echo "$NOTES"; echo 'NOTES_EOF'; } >> "$GITHUB_OUTPUT"
+
     # https://github.com/tauri-apps/tauri-action
     # macOS / Windows: build, bundle and upload to the draft release.
     - uses: tauri-apps/tauri-action@v0
@@ -76,7 +88,7 @@ jobs:
       with:
         tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
         releaseName: 'v__VERSION__'
-        releaseBody: 'See the assets to download this version and install.'
+        releaseBody: ${{ steps.notes.outputs.body }}
         releaseDraft: true
         prerelease: false
         includeUpdaterJson: true

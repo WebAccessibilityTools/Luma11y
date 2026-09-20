@@ -360,6 +360,31 @@ input[type="number"] {
   gap: 0.5rem;
 }
 
+/* Release notes (minimal markdown) */
+.update-notes {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem;
+  line-height: 1.5;
+  border: 1px solid var(--border-color-light);
+  border-radius: 5px;
+  background: var(--background-color-grey);
+  color: var(--text-color);
+
+  h2, h3, h4, h5, h6 {
+    margin: 0.5rem 0 0.25rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--text-color-strong);
+  }
+
+  ul {
+    margin: 0 0 0.5rem;
+    padding-left: 1.25rem;
+  }
+
+  p { margin: 0 0 0.5rem; }
+}
+
 /* -----------------------------------------------------------------------------
    ABOUT TAB
    ----------------------------------------------------------------------------- */

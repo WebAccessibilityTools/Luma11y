@@ -102,6 +102,28 @@ function keyboardEventToShortcut(event: KeyboardEvent): string {
 // right language.
 initLocale();
 
+// Minimal markdown for the release notes (from CHANGELOG.md)
+// Text is HTML-escaped first
+function renderNotes(md: string): string {
+  const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+  const inline = (t: string) => esc(t)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  const out: string[] = [];
+  let inList = false;
+  for (const line of md.split(/\r?\n/)) {
+    const h = /^(#{1,6})\s+(.*)$/.exec(line);
+    const li = /^\s*[-*]\s+(.*)$/.exec(line);
+    if (inList && !li) { out.push('</ul>'); inList = false; }
+    if (h) out.push(`<h${Math.min(h[1].length + 1, 6)}>${inline(h[2])}</h${Math.min(h[1].length + 1, 6)}>`);
+    else if (li) { if (!inList) { out.push('<ul>'); inList = true; } out.push(`<li>${inline(li[1])}</li>`); }
+    else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+  }
+  if (inList) out.push('</ul>');
+  return out.join('');
+}
+
 Alpine.store('settings', {
   // Current preference
   preference: 'auto' as LocalePreference,
@@ -217,6 +239,11 @@ Alpine.store('settings', {
       case 'error': return i18nT('settings.update_error', st.updateError);
       default: return '';
     }
+  },
+
+  // Release notes of the available update, as HTML
+  updateNotesHtml(): string {
+    return renderNotes((this as any).update?.body ?? '');
   },
 
   async checkUpdate(): Promise<void> {
