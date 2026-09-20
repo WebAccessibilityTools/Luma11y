@@ -19,6 +19,7 @@ import { UIStore, BackendStore } from './store';
 
 // Import i18n module
 import { initLocale, onLocaleChange, setLocale, t as i18nT } from './i18n';
+import { check, type Update } from '@tauri-apps/plugin-updater';
 
 // Import system locale detection via Tauri plugin OS
 import { locale as getSystemLocale } from '@tauri-apps/plugin-os';
@@ -275,6 +276,22 @@ async function checkScreenRecordingPermission(): Promise<void> {
 // Register the store in Alpine.js with the name 'uiStore'
 Alpine.store('uiStore', UIStore);
 
+// Update banner: one check at startup
+type UpdaterStore = { update: Update | null; later(): void; view(): void };
+const updaterStore: UpdaterStore = {
+  update: null,
+  // Dismiss for this session; the check runs again at next startup.
+  later() {
+    this.update = null;
+  },
+  // Open the Updates tab of the settings.
+  view() {
+    this.update = null;
+    invoke('open_settings_window', { tab: 'update' }).catch(() => {});
+  },
+};
+Alpine.store('updater', updaterStore);
+
 // =============================================================================
 // BIDIRECTIONAL i18n SYNCHRONIZATION
 // =============================================================================
@@ -296,6 +313,10 @@ onLocaleChange((locale) => {
 
 // Initialize Alpine.js and activate reactivity in the DOM
 Alpine.start();
+
+// Dev only: create access to the stores from the webview console (e.g. to fake an update)
+if (import.meta.env.DEV) (window as unknown as { Alpine: typeof Alpine }).Alpine = Alpine;
+
 initTheme();
 initStyleTheme();
 
@@ -582,5 +603,13 @@ async function restoreLastAlwaysOnTop(): Promise<void> {
   } catch (error) {
     // Display error if retrieval fails
     console.error('Error loading ICC profile:', error);
+  }
+  // Step 7: automatic update check
+  if (localStorage.getItem('luma11y-auto-update') !== 'false') {
+    try {
+      (Alpine.store('updater') as UpdaterStore).update = await check();
+    } catch (err) {
+      console.warn('Update check failed:', err);
+    }
   }
 })();

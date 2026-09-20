@@ -428,10 +428,10 @@ fn open_settings_window_impl(app: &tauri::AppHandle, tab: &str) {
 
 /// Tauri command to open the Settings window from the frontend (toolbar menu).
 #[tauri::command]
-async fn open_settings_window(app: tauri::AppHandle) {
+async fn open_settings_window(app: tauri::AppHandle, tab: Option<String>) {
     let inner = app.clone();
     let _ = app.run_on_main_thread(move || {
-        open_settings_window_impl(&inner, "general");
+        open_settings_window_impl(&inner, tab.as_deref().unwrap_or("general"));
     });
 }
 
@@ -558,6 +558,12 @@ fn open_wayland_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+/// Relaunches the app once an update has been installed
+#[tauri::command]
+fn restart_app(app: tauri::AppHandle) {
+    app.restart()
+}
+
 pub fn run() {
     tauri::Builder::default()
         // Initialize OS plugin for locale detection
@@ -566,6 +572,8 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         // Plugin to open URLs/files with the default app
         .plugin(tauri_plugin_opener::init())
+        // In-app updates
+        .plugin(tauri_plugin_updater::Builder::new().build())
         // Initialize global color store state
         .manage(store::AppState {
             store: Mutex::new(store::ResultStore::default()),
@@ -754,6 +762,7 @@ pub fn run() {
             permissions::check_screen_recording_permission,
             permissions::request_screen_recording_permission,
             permissions::open_screen_recording_settings,
+            restart_app,
         ])
         // Run the Tauri application
         // The "Wayland not supported" window is the only one open in that case:

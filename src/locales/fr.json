@@ -1,7 +1,13 @@
 {
   "app": {
     "title": "Luma11y",
-    "skip_navigation": "Aller au contenu principal"
+    "skip_navigation": "Aller au contenu principal",
+    "update_title": "Une nouvelle version de Luma11y est disponible ({0})",
+    "update_body": "Ouvrez l’onglet « Mises à jour » des paramètres pour l’installer.",
+    "update_later": "Plus tard",
+    "update_view": "Voir",
+    "update_view_label": "Voir l’onglet des mises à jour",
+    "update_later_label": "Plus tard et fermer le dialogue"
   },
   "color": {
     "foreground": "Premier plan",
@@ -74,7 +80,7 @@
     "template_content": "Contenu",
     "template_name": "Nom",
     "copy_shortcut": "Raccourci",
-    "press_keys": "Appuyez sur les touches\u2026",
+    "press_keys": "Appuyez sur les touches…",
     "no_shortcut": "Cliquer pour définir",
     "theme": "Thème",
     "theme_light": "Clair",
@@ -111,7 +117,16 @@
     "tag_1_4_3": "Résultat 1.4.3 Contraste (Minimum)",
     "tag_1_4_6": "Résultat 1.4.6 Contraste (Amélioré)",
     "tag_1_4_11": "Résultat 1.4.11 Contraste des éléments non textuels",
-    "default_template_name": "Court"
+    "default_template_name": "Court",
+    "tab_update": "Mises à jour",
+    "update_auto": "Vérifier automatiquement les mises à jour au démarrage",
+    "update_checking": "Vérification…",
+    "update_none": "Luma11y est à jour.",
+    "update_available": "La version {0} est disponible.",
+    "update_error": "Impossible de vérifier les mises à jour : {0}",
+    "update_check": "Vérifier maintenant",
+    "update_install": "Mettre à jour et redémarrer",
+    "update_installing": "Installation…"
   },
   "style_chooser": {
     "title": "Choisir un style",

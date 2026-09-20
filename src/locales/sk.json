@@ -1,7 +1,13 @@
 {
   "app": {
     "title": "Luma11y",
-    "skip_navigation": "Preskočiť navigáciu"
+    "skip_navigation": "Preskočiť navigáciu",
+    "update_title": "A new version of Luma11y is available ({0})",
+    "update_body": "Open the Updates tab in the settings to install it.",
+    "update_later": "Later",
+    "update_view": "View",
+    "update_view_label": "View the Updates tab",
+    "update_later_label": "Later, and close the dialog"
   },
   "color": {
     "foreground": "Popredie",
@@ -111,7 +117,16 @@
     "tag_1_4_3": "Výsledok 1.4.3 Kontrast (Minimálny)",
     "tag_1_4_6": "Výsledok 1.4.6 Kontrast (Rozšírený)",
     "tag_1_4_11": "Výsledok 1.4.11 Kontrast netextových prvkov",
-    "default_template_name": "Krátky formát"
+    "default_template_name": "Krátky formát",
+    "tab_update": "Updates",
+    "update_auto": "Check for updates automatically at startup",
+    "update_checking": "Checking…",
+    "update_none": "Luma11y is up to date.",
+    "update_available": "Version {0} is available.",
+    "update_error": "Could not check for updates: {0}",
+    "update_check": "Check now",
+    "update_install": "Update and restart",
+    "update_installing": "Installing…"
   },
   "style_chooser": {
     "title": "Vybrať štýl",

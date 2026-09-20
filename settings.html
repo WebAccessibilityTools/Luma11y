@@ -20,7 +20,7 @@
     </header>
     <main x-data="{
       activeTab: 'general',
-      tabs: ['general', 'shortcuts', 'templates', 'about'],
+      tabs: ['general', 'shortcuts', 'templates', 'update', 'about'],
       focusTab(id) { this.$root.querySelector(`[role=tab][data-tab=${id}]`)?.focus(); },
       prevTab() { const i = this.tabs.indexOf(this.activeTab); this.activeTab = this.tabs[(i - 1 + this.tabs.length) % this.tabs.length]; this.$nextTick(() => this.focusTab(this.activeTab)); },
       nextTab() { const i = this.tabs.indexOf(this.activeTab); this.activeTab = this.tabs[(i + 1) % this.tabs.length]; this.$nextTick(() => this.focusTab(this.activeTab)); }
@@ -56,6 +56,15 @@
           @keydown.arrow-up.prevent="prevTab()"
           @keydown.arrow-down.prevent="nextTab()"
           x-text="$store.settings.t('settings.tab_templates')">Copy templates</button>
+        <button role="tab" data-tab="update"
+          id="tab-update" aria-controls="panel-update"
+          :aria-selected="activeTab === 'update'"
+          :tabindex="activeTab === 'update' ? 0 : -1"
+          :class="{ active: activeTab === 'update' }"
+          @click="activeTab = 'update'"
+          @keydown.arrow-up.prevent="prevTab()"
+          @keydown.arrow-down.prevent="nextTab()"
+          x-text="$store.settings.t('settings.tab_update')">Updates</button>
         <button role="tab" data-tab="about"
           id="tab-about" aria-controls="panel-about"
           :aria-selected="activeTab === 'about'"
@@ -259,6 +268,32 @@
           </template>
         </div>
         <button class="btn-add" @click="$store.settings.addTemplate()"><span aria-hidden="true">+</span> <span x-text="$store.settings.t('settings.add_template')">Add</span></button>
+      </div>
+
+      <!-- Tab : Update -->
+      <div role="tabpanel" id="panel-update" aria-labelledby="tab-update" x-show="activeTab === 'update'" class="tab-panel"
+           x-effect="activeTab === 'update' && $store.settings.updateState === 'idle' && $store.settings.checkUpdate()">
+        <div class="section">
+          <label class="format-toggle">
+            <input type="checkbox"
+              :checked="$store.settings.autoUpdate"
+              @change="$store.settings.autoUpdate = $event.target.checked" />
+            <span x-text="$store.settings.t('settings.update_auto')">Check for updates automatically</span>
+          </label>
+        </div>
+        <div class="section">
+          <p class="update-status" role="status" aria-live="polite" x-text="$store.settings.updateStatusText()"></p>
+          <div class="update-actions">
+            <button type="button" class="btn-secondary" x-show="$store.settings.updateState !== 'available'"
+              :disabled="$store.settings.updateState === 'checking'"
+              @click="$store.settings.checkUpdate()"
+              x-text="$store.settings.t('settings.update_check')">Check now</button>
+            <button type="button" class="btn-primary" x-show="$store.settings.updateState === 'available'"
+              :disabled="$store.settings.updateState === 'installing'"
+              @click="$store.settings.installUpdate()"
+              x-text="$store.settings.t($store.settings.updateState === 'installing' ? 'settings.update_installing' : 'settings.update_install')">Update and restart</button>
+          </div>
+        </div>
       </div>
 
       <!-- Tab : About -->

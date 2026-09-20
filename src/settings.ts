@@ -6,6 +6,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { check, type Update } from '@tauri-apps/plugin-updater';
 import { emit } from "@tauri-apps/api/event";
 import Alpine from 'alpinejs';
 import { locale as getSystemLocale } from '@tauri-apps/plugin-os';
@@ -126,6 +127,12 @@ Alpine.store('settings', {
   // Restore the last colour combination on startup
   restoreColors: localStorage.getItem('luma11y-restore-colors') === 'true',
 
+  // Updates: automatic check at startup + state of the manual check
+  autoUpdate: localStorage.getItem('luma11y-auto-update') !== 'false',
+  updateState: 'idle' as 'idle' | 'checking' | 'none' | 'available' | 'installing' | 'error',
+  update: null as Update | null,
+  updateError: '',
+
   // Toggleable color formats (excluding hex) and the enabled ones
   selectableFormats: selectableFormats as string[],
   enabledFormats: loadEnabledFormats() as string[],
@@ -198,6 +205,45 @@ Alpine.store('settings', {
     (this as any).templates[index].shortcut = keyboardEventToShortcut(event);
   },
 
+  // Status line of the Updates tab
+  updateStatusText(): string {
+    const st = (this as any);
+    void st.locale;
+    switch (st.updateState) {
+      case 'checking': return i18nT('settings.update_checking');
+      case 'none': return i18nT('settings.update_none');
+      case 'available':
+      case 'installing': return i18nT('settings.update_available', st.update?.version ?? '');
+      case 'error': return i18nT('settings.update_error', st.updateError);
+      default: return '';
+    }
+  },
+
+  async checkUpdate(): Promise<void> {
+    const st = (this as any);
+    st.updateState = 'checking';
+    try {
+      st.update = await check();
+      st.updateState = st.update ? 'available' : 'none';
+    } catch (err) {
+      st.updateError = String(err);
+      st.updateState = 'error';
+    }
+  },
+
+  async installUpdate(): Promise<void> {
+    const st = (this as any);
+    if (!st.update) return;
+    st.updateState = 'installing';
+    try {
+      await st.update.downloadAndInstall();
+      await invoke('restart_app');
+    } catch (err) {
+      st.updateError = String(err);
+      st.updateState = 'error';
+    }
+  },
+
   // Save preferences
   async save(): Promise<void> {
     // Filter out templates without a name
@@ -207,6 +253,7 @@ Alpine.store('settings', {
     localStorage.setItem('luma11y-toast-duration', String((this as any).toastDuration));
     localStorage.setItem('luma11y-enabled-formats', JSON.stringify((this as any).enabledFormats));
     localStorage.setItem('luma11y-restore-colors', String((this as any).restoreColors));
+    localStorage.setItem('luma11y-auto-update', String((this as any).autoUpdate));
 
     // Persist theme, style theme and locale
     setThemePreference((this as any).theme);

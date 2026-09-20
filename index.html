@@ -20,6 +20,23 @@
       </app-titlebar>
     </header>
     <main id="main" tabindex="-1">
+      <!-- Native <dialog>: focus trap, inert page and Escape come for free -->
+      <dialog class="update-dialog" aria-labelledby="update-title"
+              x-effect="$store.updater.update ? ($el.open || $el.showModal()) : ($el.open && $el.close())"
+              @close="$store.updater.later()">
+        <h2 id="update-title" x-text="$store.uiStore.t('app.update_title', $store.updater.update?.version ?? '')"></h2>
+        <p id="update-body" x-text="$store.uiStore.t('app.update_body')"></p>
+        <div class="actions">
+          <button type="button" class="btn-secondary" @click="$store.updater.later()"
+            x-bind:aria-label="$store.uiStore.t('app.update_later_label')"
+            x-text="$store.uiStore.t('app.update_later')"></button>
+          <button type="button" class="btn-primary" autofocus @click="$store.updater.view()"
+            x-bind:aria-label="$store.uiStore.t('app.update_view_label')"
+            x-text="$store.uiStore.t('app.update_view')"></button>
+        </div>
+      </dialog>
+        </div>
+      </div>
       <div class="colors" x-data="{ rotated: false }">
         <!-- Foreground Color -->
         <div class="wrapper" x-bind:style="`background-color: ${$store.uiStore.backgroundHex}`">
