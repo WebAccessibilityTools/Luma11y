@@ -173,6 +173,8 @@ input[type="number"] {
 }
 
 .format-toggle input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
   accent-color: var(--text-color);
 }
 
@@ -345,35 +347,17 @@ input[type="number"] {
   border-top: 1px solid var(--border-color-light);
 }
 
-.actions button {
-  font-family: inherit;
-  font-size: 13px;
-  padding: 0.375rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
+/* -----------------------------------------------------------------------------
+   UPDATES TAB
+   ----------------------------------------------------------------------------- */
+.update-status {
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
 }
 
-.btn-cancel {
-  background: var(--background-color);
-  border: 1px solid var(--border-color-light);
-  color: var(--text-color-light);
-}
-
-.btn-cancel:hover {
-  background: var(--background-color-grey);
-  color: var(--text-color-strong);
-  border-color: var(--border-color);
-}
-
-.btn-save {
-  background: var(--background-color-inverted);
-  color: var(--text-color-inverted);
-  border: 1px solid var(--border-color);
-}
-
-.btn-save:hover {
-  color: var(--text-color);
-  background: var(--background-color);
+.update-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 /* -----------------------------------------------------------------------------

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Settings</title>
     <link rel="stylesheet" href="/src/colors.css" />
+    <link rel="stylesheet" href="/src/buttons.css" />
     <link rel="stylesheet" href="/src/dialog.css" />
     <link rel="stylesheet" href="/src/settings.css" />
   </head>
@@ -324,8 +325,8 @@
 
     <!-- Fixed action bar -->
     <div class="actions">
-      <button class="btn-cancel" @click="$store.settings.cancel()" x-text="$store.settings.t('settings.cancel')">Cancel</button>
-      <button class="btn-save" @click="$store.settings.save()" x-text="$store.settings.t('settings.save')">Save</button>
+      <button class="btn-secondary" @click="$store.settings.cancel()" x-text="$store.settings.t('settings.cancel')">Cancel</button>
+      <button class="btn-primary" @click="$store.settings.save()" x-text="$store.settings.t('settings.save')">Save</button>
     </div>
 
     <script type="module" src="/src/settings.ts"></script>

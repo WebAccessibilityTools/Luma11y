@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Screen Recording permission</title>
     <link rel="stylesheet" href="/src/colors.css" />
+    <link rel="stylesheet" href="/src/buttons.css" />
     <link rel="stylesheet" href="/src/dialog.css" />
     <link rel="stylesheet" href="/src/permission.css" />
   </head>
@@ -20,8 +21,8 @@
       <p x-text="$store.perm.t('permissions.screen_recording_message')"></p>
       <p class="instructions" x-text="$store.perm.t('permissions.screen_recording_instructions')"></p>
       <div class="actions">
-        <button type="button" class="btn btn-secondary" @click="$store.perm.close()" x-text="$store.perm.t('permissions.close')"></button>
-        <button type="button" class="btn btn-primary" @click="$store.perm.openSettings()" x-text="$store.perm.t('permissions.open_settings')"></button>
+        <button type="button" class="btn-secondary" @click="$store.perm.close()" x-text="$store.perm.t('permissions.close')"></button>
+        <button type="button" class="btn-primary" @click="$store.perm.openSettings()" x-text="$store.perm.t('permissions.open_settings')"></button>
       </div>
     </main>
 
