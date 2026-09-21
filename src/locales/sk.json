@@ -123,10 +123,11 @@
     "update_checking": "Checking…",
     "update_none": "Luma11y is up to date.",
     "update_available": "Version {0} is available.",
-    "update_error": "Could not check for updates: {0}",
     "update_check": "Check now",
     "update_install": "Update and restart",
-    "update_installing": "Installing…"
+    "update_installing": "Installing…",
+    "update_error_check": "Could not check for updates.",
+    "update_error_install": "The update could not be installed."
   },
   "style_chooser": {
     "title": "Vybrať štýl",

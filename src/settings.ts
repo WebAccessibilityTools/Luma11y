@@ -236,7 +236,7 @@ Alpine.store('settings', {
       case 'none': return i18nT('settings.update_none');
       case 'available':
       case 'installing': return i18nT('settings.update_available', st.update?.version ?? '');
-      case 'error': return i18nT('settings.update_error', st.updateError);
+      case 'error': return i18nT(st.updateError);
       default: return '';
     }
   },
@@ -253,7 +253,10 @@ Alpine.store('settings', {
       st.update = await check();
       st.updateState = st.update ? 'available' : 'none';
     } catch (err) {
-      st.updateError = String(err);
+      // The plugin's messages are English-only, we display it in the console, for diagnosis.
+      console.error('Update check failed:', err);
+      // We display a generic message on the UI
+      st.updateError = 'settings.update_error_check';
       st.updateState = 'error';
     }
   },
@@ -266,7 +269,8 @@ Alpine.store('settings', {
       await st.update.downloadAndInstall();
       await invoke('restart_app');
     } catch (err) {
-      st.updateError = String(err);
+      console.error('Update install failed:', err);
+      st.updateError = 'settings.update_error_install';
       st.updateState = 'error';
     }
   },
