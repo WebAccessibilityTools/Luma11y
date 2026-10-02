@@ -411,15 +411,20 @@ define_class!(
         /// With Shift: adjusts captured pixels count
         #[unsafe(method(scrollWheel:))]
         fn scroll_wheel(&self, event: &NSEvent) {
-            // Get the vertical delta of the scroll wheel
-            let delta_y: f64 = event.deltaY();
+            // Get modifier flags to check for Shift
+            let modifier_flags: NSEventModifierFlags = event.modifierFlags();
+            let shift_pressed = modifier_flags.contains(NSEventModifierFlags::Shift);
+
+            // Get the vertical delta of the scroll wheel. With Shift, macOS
+            // turns a vertical wheel into a horizontal scroll: use deltaX then.
+            let delta_y: f64 = if shift_pressed && event.deltaY() == 0.0 {
+                event.deltaX()
+            } else {
+                event.deltaY()
+            };
 
             // If the wheel moved
             if delta_y != 0.0 {
-                // Get modifier flags to check for Shift
-                let modifier_flags: NSEventModifierFlags = event.modifierFlags();
-                let shift_pressed = modifier_flags.contains(NSEventModifierFlags::Shift);
-
                 if shift_pressed {
                     // Shift + wheel: adjust captured pixels count
                     if let Ok(mut pixels) = CURRENT_CAPTURED_PIXELS.lock() {
