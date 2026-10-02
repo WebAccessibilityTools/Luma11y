@@ -298,6 +298,20 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
 
     let edit_submenu = edit_builder.build()?;
 
+    // === VIEW SUBMENU ===
+    // Zoom of the main window content
+    let view_submenu = SubmenuBuilder::new(app, i18n::menu_t(locale, "view"))
+        .item(&MenuItemBuilder::with_id("zoom_reset", i18n::menu_t(locale, "actual_size"))
+            .accelerator("CmdOrCtrl+0")
+            .build(app)?)
+        .item(&MenuItemBuilder::with_id("zoom_in", i18n::menu_t(locale, "zoom_in"))
+            .accelerator("CmdOrCtrl+=")
+            .build(app)?)
+        .item(&MenuItemBuilder::with_id("zoom_out", i18n::menu_t(locale, "zoom_out"))
+            .accelerator("CmdOrCtrl+-")
+            .build(app)?)
+        .build()?;
+
     // === WINDOW SUBMENU ===
     let win_minimize = PredefinedMenuItem::minimize(app, Some(i18n::menu_t(locale, "minimize")))?;
     let win_close = PredefinedMenuItem::close_window(app, Some(i18n::menu_t(locale, "close_window")))?;
@@ -327,6 +341,7 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
         let root_menu = Menu::with_items(app, &[
             &app_menu,
             &edit_submenu,
+            &view_submenu,
             &icc_submenu,
             &window_submenu,
         ])?;
@@ -340,6 +355,7 @@ fn rebuild_menu(app: &tauri::AppHandle, locale: &str) -> Result<(), tauri::Error
         // silence the unused warnings
         let _ = app_menu;
         let _ = edit_submenu;
+        let _ = view_submenu;
         let _ = window_submenu;
     }
 
@@ -617,6 +633,10 @@ pub fn run() {
             }
 
             match menu_id {
+                "zoom_in" | "zoom_out" | "zoom_reset" => {
+                    let _ = app.emit_to("main", "zoom", &menu_id["zoom_".len()..]);
+                    return;
+                }
                 "settings" => {
                     open_settings_window_impl(app, "general");
                     return;

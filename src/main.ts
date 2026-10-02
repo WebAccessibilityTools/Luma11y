@@ -9,7 +9,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 
 // Import current window for resizing
-import { getCurrentWindow, PhysicalSize } from "@tauri-apps/api/window";
+import { getCurrentWindow, PhysicalSize, LogicalSize } from "@tauri-apps/api/window";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 // Import Alpine.js for user interface reactivity
 import Alpine from 'alpinejs';
@@ -61,9 +62,10 @@ let lastSetHeight = 0;
 
 async function resizeWindow() {
   const currentWindow = getCurrentWindow();
-  const factor = window.devicePixelRatio;
   const currentSize = await currentWindow.innerSize();
   const width = currentSize.width;
+  // Physical px per CSS px. This ratio includes the webview zoom.
+  const factor = width / window.innerWidth;
 
   // Observe body so header (titlebar) + main are both included.
   const bodyHeight = document.body.getBoundingClientRect().height;
@@ -83,13 +85,67 @@ document.addEventListener('DOMContentLoaded', () => {
     resizeWindow();
   });
   observer.observe(document.body);
+  // A zoom change resizes the viewport window
+  window.addEventListener('resize', () => resizeWindow());
 
   // The window is created hidden (tauri.conf.json `visible: false`): Show it once the first size adjustment is done.
-  resizeWindow()
+  setZoom(zoom, 1)
     .catch(() => {})
     .finally(() => {
       getCurrentWindow().show();
     });
+});
+
+// ====
+// ZOOM
+// ====
+
+const ZOOM_KEY = 'zoom';
+const ZOOM_MIN = 0.8;
+const ZOOM_MAX = 3;
+const ZOOM_STEP = 0.1;
+
+// Must match tauri.conf.json `minWidth`
+const BASE_MIN_WIDTH = 400;
+
+let zoom = Number(localStorage.getItem(ZOOM_KEY)) || 1;
+
+async function setZoom(next: number, previous = zoom) {
+  zoom = Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, next)) * 100) / 100;
+  localStorage.setItem(ZOOM_KEY, String(zoom));
+
+  const currentWindow = getCurrentWindow();
+  const scale = await currentWindow.scaleFactor();
+  const size = (await currentWindow.innerSize()).toLogical(scale);
+
+  // Scale the width with the zoom so the layout keeps the same CSS width.
+  // The window height is handled by resizeWindow() once the zoom is applied.
+  await currentWindow.setMinSize(new LogicalSize(BASE_MIN_WIDTH * zoom, 0));
+  await currentWindow.setSize(new LogicalSize(size.width * (zoom / previous), size.height));
+  await getCurrentWebview().setZoom(zoom);
+  lastSetHeight = 0;
+  await resizeWindow();
+}
+
+// macOS: the native View menu owns the shortcuts and emits `zoom`
+listen<'in' | 'out' | 'reset'>('zoom', ({ payload }) => {
+  setZoom(payload === 'in' ? zoom + ZOOM_STEP : payload === 'out' ? zoom - ZOOM_STEP : 1);
+});
+
+// Capture (Cmd/Ctrl +, -, 0)
+document.addEventListener('keydown', (e) => {
+  if (IS_MAC || !e.ctrlKey || e.altKey) return;
+  // e.code as fallback for keyboard layouts where the digit needs Shift key (e.g. AZERTY)
+  if (['+', '='].includes(e.key) || e.code === 'NumpadAdd') {
+    setZoom(zoom + ZOOM_STEP);
+  } else if (e.key === '-' || e.code === 'NumpadSubtract') {
+    setZoom(zoom - ZOOM_STEP);
+  } else if (e.key === '0' || e.code === 'Digit0' || e.code === 'Numpad0') {
+    setZoom(1);
+  } else {
+    return;
+  }
+  e.preventDefault();
 });
 
 // Block the webview's native context menu in production builds.

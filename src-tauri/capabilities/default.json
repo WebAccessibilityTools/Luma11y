@@ -6,6 +6,8 @@
   "permissions": [
     "core:default",
     "core:window:allow-set-size",
+    "core:window:allow-set-min-size",
+    "core:webview:allow-set-webview-zoom",
     "core:window:allow-is-decorated",
     "core:window:allow-outer-size",
     "core:window:allow-close",
