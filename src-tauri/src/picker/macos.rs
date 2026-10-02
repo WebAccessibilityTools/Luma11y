@@ -343,6 +343,14 @@ define_class!(
             }
         }
 
+        // ---------------------------------------
+        // rightMouseDown: - Cancels the selection
+        // ---------------------------------------
+        #[unsafe(method(rightMouseDown:))]
+        fn right_mouse_down(&self, _event: &NSEvent) {
+            stop_application();
+        }
+
         // ---------------------------------------------------------------------
         // mouseMoved: - Handles mouse movements
         // ---------------------------------------------------------------------
@@ -453,7 +461,7 @@ define_class!(
         // keyDown: - Handles keyboard keys
         // ---------------------------------------------------------------------
         /// Called when a key is pressed
-        /// Handles ESC (cancel), Enter (confirm), and arrows (move)
+        /// Handles ESC (cancel), Enter/Space (select), and arrows (move)
         #[unsafe(method(keyDown:))]
         fn key_down(&self, event: &NSEvent) {
             // Get the key code of the pressed key
@@ -483,34 +491,15 @@ define_class!(
             let pixels_to_move = if shift_pressed { SHIFT_MOVE_PIXELS } else { 1.0 };
             let move_amount = pixels_to_move / scale_factor;
 
-            // Key codes: ESC = 53, Enter/Return = 36, C = 8, I = 34, O = 31
+            // Key codes: ESC = 53, Enter/Return = 36, keypad Enter = 76,
+            // Space = 49, C = 8, I = 34, O = 31
             if key_code == 53 {
                 // ESC - Cancel the selection
                 stop_application();
-            } else if key_code == 36 {
-                // Enter - Confirm the selection and exit
-                // Get the current fg mode
-                let is_fg_mode = if let Ok(mode) = FG_MODE.lock() {
-                    *mode
-                } else {
-                    true
-                };
-
-                if let Ok(state) = MOUSE_STATE.lock() {
-                    if let Some(ref info) = *state {
-                        // Store the color in the appropriate variable based on fg_mode
-                        if is_fg_mode {
-                            if let Ok(mut fg_color) = FG_COLOR.lock() {
-                                *fg_color = Some((info.r, info.g, info.b));
-                            }
-                        } else {
-                            if let Ok(mut bg_color) = BG_COLOR.lock() {
-                                *bg_color = Some((info.r, info.g, info.b));
-                            }
-                        }
-                    }
-                }
-                stop_application();
+            } else if key_code == 36 || key_code == 76 || key_code == 49 {
+                // Enter / keypad Enter / Space: same logic as a left click
+                // (honors continue mode, like Windows and Linux)
+                let _: () = unsafe { msg_send![self, mouseDown: event] };
             } else if key_code == 8 {
                 // C key - Toggle continue mode
                 if let Ok(mut continue_mode) = CONTINUE_MODE.lock() {
