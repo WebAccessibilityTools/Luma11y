@@ -42,6 +42,9 @@ pub struct ResultStore {
     /// Foreground color in OKLCH format "oklch(l c h)"
     pub foreground_oklch: String,
 
+    /// Foreground color in OKLab format "oklab(l a b)"
+    pub foreground_oklab: String,
+
     /// If the colour is dark
     pub foreground_is_dark: bool,
 
@@ -71,6 +74,9 @@ pub struct ResultStore {
 
     /// Background color in OKLCH format "oklch(l c h)"
     pub background_oklch: String,
+
+    /// Background color in OKLab format "oklab(l a b)"
+    pub background_oklab: String,
 
     /// If the colour is dark
     pub background_is_dark: bool,
@@ -116,6 +122,7 @@ impl Default for ResultStore {
             foreground_hsv: color::rgb_to_hsv_string((fr, fg, fb), 1.0),
             foreground_lab: color::rgb_to_lab_string((fr, fg, fb), 1.0),
             foreground_oklch: color::rgb_to_oklch_string((fr, fg, fb), 1.0),
+            foreground_oklab: color::rgb_to_oklab_string((fr, fg, fb), 1.0),
             foreground_is_dark: color::is_dark((fr, fg, fb)),
             foreground_alpha: 1.0,
             foreground_composited_hex: format!("#{:02X}{:02X}{:02X}", fr, fg, fb),
@@ -126,6 +133,7 @@ impl Default for ResultStore {
             background_hsv: color::rgb_to_hsv_string((br, bg, bb), 1.0),
             background_lab: color::rgb_to_lab_string((br, bg, bb), 1.0),
             background_oklch: color::rgb_to_oklch_string((br, bg, bb), 1.0),
+            background_oklab: color::rgb_to_oklab_string((br, bg, bb), 1.0),
             background_is_dark: color::is_dark((br, bg, bb)),
             continue_mode: false,
             contrast_ratio_raw,
@@ -201,6 +209,7 @@ pub(crate) fn apply_color(store: &mut ResultStore, key: &str, rgb: (u8, u8, u8),
     let mut hsv = color::rgb_to_hsv_string(rgb, alpha);
     let mut lab = color::rgb_to_lab_string(rgb, alpha);
     let mut oklch = color::rgb_to_oklch_string(rgb, alpha);
+    let mut oklab = color::rgb_to_oklab_string(rgb, alpha);
 
     // Keep the entered string for the edited format (verbatim).
     if let Some((fmt, s)) = source {
@@ -209,6 +218,7 @@ pub(crate) fn apply_color(store: &mut ResultStore, key: &str, rgb: (u8, u8, u8),
             "hsv" => hsv = s,
             "lab" => lab = s,
             "oklch" => oklch = s,
+            "oklab" => oklab = s,
             _ => {}
         }
     }
@@ -222,6 +232,7 @@ pub(crate) fn apply_color(store: &mut ResultStore, key: &str, rgb: (u8, u8, u8),
             store.foreground_hsv = hsv;
             store.foreground_lab = lab;
             store.foreground_oklch = oklch;
+            store.foreground_oklab = oklab;
             store.foreground_alpha = alpha;
             // Dark: evaluated on the color composited over the background.
             store.foreground_is_dark =
@@ -235,6 +246,7 @@ pub(crate) fn apply_color(store: &mut ResultStore, key: &str, rgb: (u8, u8, u8),
             store.background_hsv = hsv;
             store.background_lab = lab;
             store.background_oklch = oklch;
+            store.background_oklab = oklab;
             store.background_is_dark = color::is_dark(rgb);
         }
         _ => return false, // Unknown key
@@ -312,6 +324,18 @@ pub fn update_store_oklch(app: AppHandle, state: tauri::State<AppState>, key: St
     let display = format!("oklch({:.3} {:.3} {:.0}{})", l, c, h, color::alpha_suffix(alpha));
     let mut store = state.store.lock().unwrap();
     if apply_color(&mut store, &key, rgb, alpha, Some(("oklch", display))) {
+        let _ = app.emit("store-updated", store.clone());
+    }
+}
+
+/// Updates a color from OKLab components (l: 0-1, a/b: may be negative).
+#[tauri::command]
+pub fn update_store_oklab(app: AppHandle, state: tauri::State<AppState>, key: String, l: f64, a: f64, b: f64, alpha: Option<f64>) {
+    let rgb = color::oklab_to_rgb(l, a, b);
+    let alpha = alpha.unwrap_or(1.0);
+    let display = format!("oklab({:.3} {:.3} {:.3}{})", l, a, b, color::alpha_suffix(alpha));
+    let mut store = state.store.lock().unwrap();
+    if apply_color(&mut store, &key, rgb, alpha, Some(("oklab", display))) {
         let _ = app.emit("store-updated", store.clone());
     }
 }

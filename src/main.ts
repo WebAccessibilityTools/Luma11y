@@ -180,6 +180,8 @@ function formatTemplate(template: string, store: UIStore): string {
     .replace(/%b\.lab%/g, store.backgroundLab)
     .replace(/%f\.oklch%/g, store.foregroundOklch)
     .replace(/%b\.oklch%/g, store.backgroundOklch)
+    .replace(/%f\.oklab%/g, store.foregroundOklab)
+    .replace(/%b\.oklab%/g, store.backgroundOklab)
     .replace(/%cr%/g, store.contrastRatio)
     .replace(/%crr%/g, store.contrastRatio)
     .replace(/%1\.4\.3%/g, store.level143Regular ? 'Pass' : 'Fail')

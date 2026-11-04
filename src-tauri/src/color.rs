@@ -2,7 +2,7 @@
 // color.rs - Color manipulation and store update functions
 // =============================================================================
 
-use palette::{FromColor, Hsl, Hsv, Lab, Oklch, Srgb};
+use palette::{FromColor, Hsl, Hsv, Lab, Oklab, Oklch, Srgb};
 use crate::store::ResultStore;
 use crate::picker::common::ColorPickerResult;
 use crate::wcag_contrast;
@@ -113,6 +113,20 @@ pub fn rgb_to_oklch_string(rgb: (u8, u8, u8), alpha: f64) -> String {
 pub fn oklch_to_rgb(l: f64, c: f64, h: f64) -> (u8, u8, u8) {
     let oklch = Oklch::new(l, c, h);
     let rgb = Srgb::from_color(oklch).into_format::<u8>();
+    (rgb.red, rgb.green, rgb.blue)
+}
+
+/// Serializes an RGB color into a CSS OKLab string "oklab(l a b)" (a/b may be negative).
+pub fn rgb_to_oklab_string(rgb: (u8, u8, u8), alpha: f64) -> String {
+    let oklab = Oklab::from_color(srgb_from_u8(rgb));
+    format!("oklab({:.3} {:.3} {:.3}{})", oklab.l, oklab.a, oklab.b, alpha_suffix(alpha))
+}
+
+/// Converts an OKLab color (l: 0-1, a/b ~ -0.4..0.4) into RGB components.
+/// The resulting color is clamped to the sRGB gamut.
+pub fn oklab_to_rgb(l: f64, a: f64, b: f64) -> (u8, u8, u8) {
+    let oklab = Oklab::new(l, a, b);
+    let rgb = Srgb::from_color(oklab).into_format::<u8>();
     (rgb.red, rgb.green, rgb.blue)
 }
 

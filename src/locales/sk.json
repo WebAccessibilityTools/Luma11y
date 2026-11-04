@@ -24,6 +24,8 @@
     "value_component": "Hodnota",
     "lab_a": "a* (zelená–červená)",
     "lab_b": "b* (modrá–žltá)",
+    "oklab_a": "a (zelená–červená)",
+    "oklab_b": "b (modrá–žltá)",
     "chroma": "Chróma",
     "alpha": "Alfa",
     "component_value": "Hodnota farebnej zložky",
@@ -39,7 +41,8 @@
     "hsl": "HSL",
     "hsv": "HSV",
     "lab": "Lab",
-    "oklch": "OKLCH"
+    "oklch": "OKLCH",
+    "oklab": "OKLab"
   },
   "results": {
     "contrast_ratio": "Kontrastný pomer",
@@ -112,6 +115,8 @@
     "tag_b_lab": "Farba pozadia (Lab)",
     "tag_f_oklch": "Farba popredia (OKLCH)",
     "tag_b_oklch": "Farba pozadia (OKLCH)",
+    "tag_f_oklab": "Farba popredia (OKLab)",
+    "tag_b_oklab": "Farba pozadia (OKLab)",
     "tag_cr": "Kontrastný pomer (surový)",
     "tag_crr": "Kontrastný pomer (zaokrúhlený)",
     "tag_1_4_3": "Výsledok 1.4.3 Kontrast (Minimálny)",

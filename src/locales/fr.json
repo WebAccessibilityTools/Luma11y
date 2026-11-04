@@ -24,6 +24,8 @@
     "value_component": "Valeur",
     "lab_a": "a* (vert–rouge)",
     "lab_b": "b* (bleu–jaune)",
+    "oklab_a": "a (vert–rouge)",
+    "oklab_b": "b (bleu–jaune)",
     "chroma": "Chroma",
     "alpha": "Alpha",
     "component_value": "Valeur de la composante couleur",
@@ -39,7 +41,8 @@
     "hsl": "HSL",
     "hsv": "HSV",
     "lab": "Lab",
-    "oklch": "OKLCH"
+    "oklch": "OKLCH",
+    "oklab": "OKLab"
   },
   "results": {
     "contrast_ratio": "Taux de contraste",
@@ -112,6 +115,8 @@
     "tag_b_lab": "Couleur d'arrière-plan (Lab)",
     "tag_f_oklch": "Couleur de premier plan (OKLCH)",
     "tag_b_oklch": "Couleur d'arrière-plan (OKLCH)",
+    "tag_f_oklab": "Couleur de premier plan (OKLab)",
+    "tag_b_oklab": "Couleur d'arrière-plan (OKLab)",
     "tag_cr": "Ratio de contraste (brut)",
     "tag_crr": "Ratio de contraste (arrondi)",
     "tag_1_4_3": "Résultat 1.4.3 Contraste (Minimum)",

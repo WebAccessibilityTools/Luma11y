@@ -13,6 +13,7 @@ import { hslFormat } from './hsl';
 import { hsvFormat } from './hsv';
 import { labFormat } from './lab';
 import { oklchFormat } from './oklch';
+import { oklabFormat } from './oklab';
 
 export type { ColorFormat, ColorCommit } from './types';
 export { hexFormat } from './hex';
@@ -21,9 +22,10 @@ export { hslFormat } from './hsl';
 export { hsvFormat } from './hsv';
 export { labFormat } from './lab';
 export { oklchFormat } from './oklch';
+export { oklabFormat } from './oklab';
 
 // All registered formats, in their priority order
-export const colorFormats: ColorFormat[] = [hexFormat, rgbFormat, hslFormat, hsvFormat, labFormat, oklchFormat];
+export const colorFormats: ColorFormat[] = [hexFormat, rgbFormat, hslFormat, hsvFormat, labFormat, oklchFormat, oklabFormat];
 
 // Looks up a format by its identifier.
 export function getColorFormat(id: string): ColorFormat | undefined {

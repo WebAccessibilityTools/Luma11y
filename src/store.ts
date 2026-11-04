@@ -21,8 +21,8 @@ export interface ColorFormatValue {
 }
 
 // Builds the id -> displayed value map.
-function colorValues(hex: string, rgb: string, hsl: string, hsv: string, lab: string, oklch: string): Record<string, string> {
-  return { hex, rgb, hsl, hsv, lab, oklch };
+function colorValues(hex: string, rgb: string, hsl: string, hsv: string, lab: string, oklch: string, oklab: string): Record<string, string> {
+  return { hex, rgb, hsl, hsv, lab, oklch, oklab };
 }
 
 // Interface for Tauri store (global state on backend side)
@@ -50,6 +50,9 @@ export interface BackendStore {
 
   // Foreground color in OKLCH format "oklch(l c h)"
   foreground_oklch: string;
+
+  // Foreground color in OKLab format "oklab(l a b)"
+  foreground_oklab: string;
 
   /// If the colour is dark
   foreground_is_dark: boolean;
@@ -80,6 +83,9 @@ export interface BackendStore {
 
   // Background color in OKLCH format "oklch(l c h)"
   background_oklch: string;
+
+  // Background color in OKLab format "oklab(l a b)"
+  background_oklab: string;
 
   /// If the colour is dark
   background_is_dark: boolean;
@@ -133,6 +139,9 @@ export interface UIStore {
   // Foreground color in OKLCH format "oklch(l c h)"
   foregroundOklch: string;
 
+  // Foreground color in OKLab format "oklab(l a b)"
+  foregroundOklab: string;
+
   // CSS name of foreground color (empty if no exact match)
   foregroundName: string;
 
@@ -167,6 +176,9 @@ export interface UIStore {
 
   // Background color in OKLCH format "oklch(l c h)"
   backgroundOklch: string;
+
+  // Background color in OKLab format "oklab(l a b)"
+  backgroundOklab: string;
 
   // CSS name of background color (empty if no exact match)
   backgroundName: string;
@@ -290,6 +302,9 @@ export const UIStore = {
   // Initial state: empty foreground OKLCH
   foregroundOklch: '',
 
+  // Initial state: empty foreground OKLab
+  foregroundOklab: '',
+
   // CSS name of foreground color
   foregroundName: '',
 
@@ -321,6 +336,9 @@ export const UIStore = {
   // Initial state: empty background OKLCH
   backgroundOklch: '',
 
+  // Initial state: empty background OKLab
+  backgroundOklab: '',
+
   // CSS name of background color
   backgroundName: '',
 
@@ -350,7 +368,7 @@ export const UIStore = {
   // the colorFormats registry
   get foregroundFormats(): ColorFormatValue[] {
     const self = this as unknown as UIStore;
-    const values = colorValues(self.foregroundHex, self.foregroundRgbCss, self.foregroundHsl, self.foregroundHsv, self.foregroundLab, self.foregroundOklch);
+    const values = colorValues(self.foregroundHex, self.foregroundRgbCss, self.foregroundHsl, self.foregroundHsv, self.foregroundLab, self.foregroundOklch, self.foregroundOklab);
     return colorFormats
       .filter((f) => f.id === 'hex' || self.enabledFormats.includes(f.id))
       .map((f) => ({ id: f.id, label: self.t(`color.${f.id}`), value: values[f.id] ?? '' }));
@@ -358,7 +376,7 @@ export const UIStore = {
 
   get backgroundFormats(): ColorFormatValue[] {
     const self = this as unknown as UIStore;
-    const values = colorValues(self.backgroundHex, self.backgroundRgbCss, self.backgroundHsl, self.backgroundHsv, self.backgroundLab, self.backgroundOklch);
+    const values = colorValues(self.backgroundHex, self.backgroundRgbCss, self.backgroundHsl, self.backgroundHsv, self.backgroundLab, self.backgroundOklch, self.backgroundOklab);
     return colorFormats
       .filter((f) => f.id === 'hex' || self.enabledFormats.includes(f.id))
       .map((f) => ({ id: f.id, label: self.t(`color.${f.id}`), value: values[f.id] ?? '' }));
@@ -367,13 +385,13 @@ export const UIStore = {
   // Value shown in the color preview, depending on the selected format radio.
   get foregroundDisplayValue(): string {
     const self = this as unknown as UIStore;
-    const values = colorValues(self.foregroundHex, self.foregroundRgbCss, self.foregroundHsl, self.foregroundHsv, self.foregroundLab, self.foregroundOklch);
+    const values = colorValues(self.foregroundHex, self.foregroundRgbCss, self.foregroundHsl, self.foregroundHsv, self.foregroundLab, self.foregroundOklch, self.foregroundOklab);
     return values[self.foregroundFormat] ?? self.foregroundHex;
   },
 
   get backgroundDisplayValue(): string {
     const self = this as unknown as UIStore;
-    const values = colorValues(self.backgroundHex, self.backgroundRgbCss, self.backgroundHsl, self.backgroundHsv, self.backgroundLab, self.backgroundOklch);
+    const values = colorValues(self.backgroundHex, self.backgroundRgbCss, self.backgroundHsl, self.backgroundHsv, self.backgroundLab, self.backgroundOklch, self.backgroundOklab);
     return values[self.backgroundFormat] ?? self.backgroundHex;
   },
 
@@ -532,6 +550,9 @@ export const UIStore = {
     // Update foreground color (OKLCH format)
     this.foregroundOklch = store.foreground_oklch;
 
+    // Update foreground color (OKLab format)
+    this.foregroundOklab = store.foreground_oklab;
+
     // Look up exact CSS name
     invoke<string>('get_color_name', { r: fr, g: fg, b: fb }).then((name) => {
       this.foregroundName = name;
@@ -563,6 +584,7 @@ export const UIStore = {
     this.backgroundHsv = store.background_hsv;
     this.backgroundLab = store.background_lab;
     this.backgroundOklch = store.background_oklch;
+    this.backgroundOklab = store.background_oklab;
 
     // Look up exact CSS name
     invoke<string>('get_color_name', { r: br, g: bg, b: bb }).then((name) => {

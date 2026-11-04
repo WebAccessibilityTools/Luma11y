@@ -25,6 +25,7 @@ import { hslToCss } from '../colors/hsl';
 import { hsvToCss } from '../colors/hsv';
 import { labToCss } from '../colors/lab';
 import { oklchToCss } from '../colors/oklch';
+import { oklabToCss } from '../colors/oklab';
 
 // Channel definitions per color format (order = display order).
 //   - command / argKeys : backend command that converts + updates the store
@@ -104,6 +105,16 @@ const FORMAT_CHANNELS: Record<string, FormatChannels> = {
       { letter: 'L', labelKey: 'color.lightness', max: 1, step: 0.001 },
       { letter: 'C', labelKey: 'color.chroma', max: 0.4, step: 0.001 },
       { letter: 'H', labelKey: 'color.hue', max: 360 },
+    ],
+  },
+  oklab: {
+    command: 'update_store_oklab',
+    argKeys: ['l', 'a', 'b'],
+    toCss: oklabToCss,
+    channels: [
+      { letter: 'L', labelKey: 'color.lightness', max: 1, step: 0.001 },
+      { letter: 'a', labelKey: 'color.oklab_a', min: -0.4, max: 0.4, step: 0.001 },
+      { letter: 'b', labelKey: 'color.oklab_b', min: -0.4, max: 0.4, step: 0.001 },
     ],
   },
 };

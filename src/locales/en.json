@@ -24,6 +24,8 @@
     "value_component": "Value",
     "lab_a": "a* (green–red)",
     "lab_b": "b* (blue–yellow)",
+    "oklab_a": "a (green–red)",
+    "oklab_b": "b (blue–yellow)",
     "chroma": "Chroma",
     "alpha": "Alpha",
     "component_value": "Colour component value",
@@ -39,7 +41,8 @@
     "hsl": "HSL",
     "hsv": "HSV",
     "lab": "Lab",
-    "oklch": "OKLCH"
+    "oklch": "OKLCH",
+    "oklab": "OKLab"
   },
   "results": {
     "contrast_ratio": "Contrast Ratio",
@@ -112,6 +115,8 @@
     "tag_b_lab": "Background colour (Lab)",
     "tag_f_oklch": "Foreground colour (OKLCH)",
     "tag_b_oklch": "Background colour (OKLCH)",
+    "tag_f_oklab": "Foreground colour (OKLab)",
+    "tag_b_oklab": "Background colour (OKLab)",
     "tag_cr": "Contrast ratio (raw)",
     "tag_crr": "Contrast ratio (rounded)",
     "tag_1_4_3": "1.4.3 Contrast (Minimum) result",
