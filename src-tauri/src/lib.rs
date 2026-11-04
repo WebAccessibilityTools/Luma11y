@@ -558,6 +558,16 @@ fn open_wayland_window(app: &tauri::AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+/// True when the app runs from the Microsoft Store package: MSIX apps are
+/// installed under `WindowsApps`. The Store handles updates, so the built-in
+/// updater must stay off in that case.
+#[tauri::command]
+fn is_store_build() -> bool {
+    std::env::current_exe()
+        .map(|p| p.components().any(|c| c.as_os_str() == "WindowsApps"))
+        .unwrap_or(false)
+}
+
 pub fn run() {
     tauri::Builder::default()
         // Initialize OS plugin for locale detection
@@ -730,6 +740,7 @@ pub fn run() {
         })
         // Register Tauri commands
         .invoke_handler(tauri::generate_handler![
+            is_store_build,
             store::get_store,
             store::pick_color,
             store::update_store_rgb,
