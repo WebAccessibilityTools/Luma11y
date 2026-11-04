@@ -44,43 +44,60 @@ Or, if you prefer, buy me some coffe for further improve this tool even more.
 
 ## Table of Contents
 
-- [Installation (macOS)](#installation-macos)
+- [Features](#features)
+- [Keyboard shortcuts](#keyboard-shortcuts)
 - [Contributing](#contributing)
 - [Contact](#contact)
 - [License](#license)
 
-## Installation (macOS)
+## Features
+
+- **WCAG contrast ratio**: pass/fail results for 1.4.3 Contrast (Minimum), 1.4.6 Contrast (Enhanced) and 1.4.11 Non-text Contrast, for regular and large text.
+- **Screen colour picker**: a magnifier to pick any pixel on screen, with adjustable zoom, pixel-precise keyboard moves and a *continue mode* to pick both colours in a row.
+- **Colour formats**: Hex, RGB, HSL, HSV, Lab, OKLCH and OKLab. Type a value or adjust each channel with a slider. Choose the displayed formats in Settings.
+- **Alpha channel**: a transparent foreground is blended over the background before the contrast is measured.
+- **Colour names**: the CSS colour name is shown when a colour exactly matches a named colour.
+- **Copy templates**: copy the results to the clipboard in your own format, each template with its own shortcut.
+- **Global picker shortcuts**: start the picker even when Luma11y is not focused.
+- **Appearance**: Modern or Classic style, automatic/light/dark theme, window zoom, “Always on top”.
+- **Colour profiles (macOS)**: switch the display ICC profile from the menu bar.
+- **Restore last colours** on startup (optional).
+- **Automatic updates** from the Updates tab in Settings.
+- **Accessible and localised**: keyboard and screen reader friendly, available in English, French and Slovak.
 
 > [!NOTE]
-> The app is not yet signed with an Apple Developer certificate. You will need to bypass Gatekeeper using one of the options below.
+> On macOS, the picker needs the “Screen & System Audio Recording” permission to read pixels on screen. The app asks for it at first launch.
 
-### Option 1 &mdash; Disable Gatekeeper (recommended)
+## Keyboard shortcuts
 
-1. Download the latest release from the [Releases](https://github.com/WebAccessibilityTools/Luma11y/releases) page.
-2. Move the unzipped `Luma11y.app` to your **Applications** folder. **Do not double-click yet.**
-3. Open **Terminal** and run:
-   ```shell
-   sudo spctl --master-disable
-   ```
-4. Go to **System Settings** > **Privacy & Security** > **Security** and choose **Anywhere**.
-5. Double-click `Luma11y.app` to launch it. Accept the prompt if asked.
+On macOS, <kbd>Cmd</kbd> replaces <kbd>Ctrl</kbd>.
 
-### Option 2 &mdash; Without disabling Gatekeeper
+### Main window
 
-1. Download the latest release from the [Releases](https://github.com/WebAccessibilityTools/Luma11y/releases) page.
-2. Enable **System Settings** > **Privacy & Security** > **Security** > **App Store and identified developers**.
-3. Double-click `Luma11y.app`. It will be blocked.
-4. Go to **System Settings** > **Privacy & Security** > **Security** and click **Open Anyway**.
-5. If prompted, allow the application to run.
+| Shortcut | Action |
+| --- | --- |
+| <kbd>F11</kbd> | Pick the foreground colour (global, customisable) |
+| <kbd>F12</kbd> | Pick the background colour (global, customisable) |
+| <kbd>Ctrl</kbd>+<kbd>S</kbd> | Copy the results with the default template (customisable) |
+| <kbd>Ctrl</kbd>+<kbd>,</kbd> | Open Settings |
+| <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> | Zoom in / out the window |
+| <kbd>Ctrl</kbd>+<kbd>0</kbd> | Reset the window zoom |
+| <kbd>Shift</kbd>+arrows | On a channel slider: change the value by 10 instead of 1 |
+| <kbd>Esc</kbd> | Close the Settings window, or an open menu |
 
-### Option 3 &mdash; Remove quarantine for Luma11y only
+### Colour picker
 
-1. Download the latest release from the [Releases](https://github.com/WebAccessibilityTools/Luma11y/releases) page.
-2. Move the unzipped `Luma11y.app` to your **Applications** folder. **Do not double-click yet.**
-3. Open **Terminal** and run:
-   ```shell
-   sudo xattr -cr ~/Applications/Luma11y.app
-   ```
+| Shortcut | Action |
+| --- | --- |
+| Arrows | Move by 1 pixel |
+| <kbd>Shift</kbd>+arrows | Move by 50 pixels |
+| <kbd>Enter</kbd>, <kbd>Space</kbd> or click | Select the colour |
+| <kbd>Esc</kbd> or right click | Cancel |
+| <kbd>C</kbd> | Toggle continue mode (pick foreground and background in a row) |
+| <kbd>I</kbd> / <kbd>O</kbd> or mouse wheel | Zoom in / out |
+| <kbd>Shift</kbd>+<kbd>I</kbd> / <kbd>Shift</kbd>+<kbd>O</kbd> or <kbd>Shift</kbd>+wheel | Capture more / fewer pixels |
+
+Picker and copy shortcuts can be changed in **Settings › Shortcuts** and **Settings › Copy templates**.
 
 ## Contributing
 

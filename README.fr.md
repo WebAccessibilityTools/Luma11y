@@ -45,43 +45,60 @@ Ou, si vous préférez, offrez-moi un café pour m'aider à améliorer cet outil
 
 ## Table des matières
 
-- [Installation (macOS)](#installation-macos)
+- [Fonctionnalités](#fonctionnalités)
+- [Raccourcis clavier](#raccourcis-clavier)
 - [Contribuer](#contribuer)
 - [Contact](#contact)
 - [Licence](#licence)
 
-## Installation (macOS)
+## Fonctionnalités
+
+- **Ratio de contraste WCAG** : résultats réussite/échec pour les critères 1.4.3 Contraste (minimum), 1.4.6 Contraste (amélioré) et 1.4.11 Contraste du contenu non textuel, pour le texte normal et le grand texte.
+- **Pipette à l'écran** : une loupe pour capturer n'importe quel pixel de l'écran, avec zoom réglable, déplacement au pixel près au clavier et un *mode continu* pour capturer les deux couleurs à la suite.
+- **Formats de couleur** : Hex, RGB, HSL, HSV, Lab, OKLCH et OKLab. Saisissez une valeur ou ajustez chaque composante avec un curseur. Choisissez les formats affichés dans les Préférences.
+- **Canal alpha** : une couleur de premier plan transparente est fusionnée avec l'arrière-plan avant le calcul du contraste.
+- **Noms de couleur** : le nom de couleur CSS est affiché lorsqu'une couleur correspond exactement à une couleur nommée.
+- **Modèles de copie** : copiez les résultats dans le presse-papiers au format de votre choix, chaque modèle avec son propre raccourci.
+- **Raccourcis globaux de la pipette** : lancez la pipette même lorsque Luma11y n'a pas le focus.
+- **Apparence** : style Moderne ou Classique, thème automatique/clair/sombre, zoom de la fenêtre, « Toujours au premier plan ».
+- **Profils de couleur (macOS)** : changez le profil ICC de l'écran depuis la barre de menus.
+- **Restauration des dernières couleurs** au démarrage (optionnel).
+- **Mises à jour automatiques** depuis l'onglet Mises à jour des Préférences.
+- **Accessible et traduit** : utilisable au clavier et avec un lecteur d'écran, disponible en anglais, français et slovaque.
 
 > [!NOTE]
-> L'application n'est pas encore signée avec un certificat Apple Developer. Vous devrez contourner Gatekeeper en utilisant l'une des options ci-dessous.
+> Sur macOS, la pipette a besoin de l'autorisation « Enregistrement de l'écran et de l'audio du système » pour lire les pixels de l'écran. L'application la demande au premier lancement.
 
-### Option 1 &mdash; Désactiver Gatekeeper (recommandé)
+## Raccourcis clavier
 
-1. Téléchargez la dernière version depuis la page [Releases](https://github.com/WebAccessibilityTools/Luma11y/releases).
-2. Déplacez le fichier `Luma11y.app` décompressé dans votre dossier **Applications**. **Ne double-cliquez pas encore.**
-3. Ouvrez le **Terminal** et exécutez :
-   ```shell
-   sudo spctl --master-disable
-   ```
-4. Allez dans **Réglages du système** > **Confidentialité et sécurité** > **Sécurité** et choisissez **N'importe où**.
-5. Double-cliquez sur `Luma11y.app` pour le lancer. Acceptez l'invite si demandé.
+Sur macOS, <kbd>Cmd</kbd> remplace <kbd>Ctrl</kbd>.
 
-### Option 2 &mdash; Sans désactiver Gatekeeper
+### Fenêtre principale
 
-1. Téléchargez la dernière version depuis la page [Releases](https://github.com/WebAccessibilityTools/Luma11y/releases).
-2. Activez **Réglages du système** > **Confidentialité et sécurité** > **Sécurité** > **App Store et développeurs identifiés**.
-3. Double-cliquez sur `Luma11y.app`. Il sera bloqué. 
-4. Allez dans **Réglages du système** > **Confidentialité et sécurité** > **Sécurité** et cliquez sur **Ouvrir quand même**.
-5. Si demandé, autorisez l'exécution de l'application.
+| Raccourci | Action |
+| --- | --- |
+| <kbd>F11</kbd> | Capturer la couleur de premier plan (global, personnalisable) |
+| <kbd>F12</kbd> | Capturer la couleur d'arrière-plan (global, personnalisable) |
+| <kbd>Ctrl</kbd>+<kbd>S</kbd> | Copier les résultats avec le modèle par défaut (personnalisable) |
+| <kbd>Ctrl</kbd>+<kbd>,</kbd> | Ouvrir les Préférences |
+| <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> | Agrandir / réduire le zoom de la fenêtre |
+| <kbd>Ctrl</kbd>+<kbd>0</kbd> | Réinitialiser le zoom de la fenêtre |
+| <kbd>Maj</kbd>+flèches | Sur un curseur de composante : modifier la valeur de 10 au lieu de 1 |
+| <kbd>Échap</kbd> | Fermer la fenêtre des Préférences, ou un menu ouvert |
 
-### Option 3 &mdash; Supprimer la quarantaine pour Luma11y uniquement
+### Pipette
 
-1. Téléchargez la dernière version depuis la page [Releases](https://github.com/WebAccessibilityTools/Luma11y/releases).
-2. Déplacez le fichier `Luma11y.app` décompressé dans votre dossier **Applications**. **Ne double-cliquez pas encore.**
-3. Ouvrez le **Terminal** et exécutez :
-   ```shell
-   sudo xattr -cr ~/Applications/Luma11y.app
-   ```
+| Raccourci | Action |
+| --- | --- |
+| Flèches | Déplacer d'un pixel |
+| <kbd>Maj</kbd>+flèches | Déplacer de 50 pixels |
+| <kbd>Entrée</kbd>, <kbd>Espace</kbd> ou clic | Sélectionner la couleur |
+| <kbd>Échap</kbd> ou clic droit | Annuler |
+| <kbd>C</kbd> | Activer/désactiver le mode continu (capturer premier plan et arrière-plan à la suite) |
+| <kbd>I</kbd> / <kbd>O</kbd> ou molette | Zoom avant / arrière |
+| <kbd>Maj</kbd>+<kbd>I</kbd> / <kbd>Maj</kbd>+<kbd>O</kbd> ou <kbd>Maj</kbd>+molette | Capturer plus / moins de pixels |
+
+Les raccourcis de la pipette et de copie se modifient dans **Préférences › Raccourcis** et **Préférences › Modèles de copie**.
 
 ## Contribuer
 

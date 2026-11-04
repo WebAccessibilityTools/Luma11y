@@ -47,43 +47,60 @@ Alebo, ak preferujete, kúpte mi kávu na ďalšie vylepšovanie tohto nástroja
 
 ## Obsah
 
-- [Inštalácia (macOS)](#inštalácia-macos)
+- [Features](#features)
+- [Keyboard shortcuts](#keyboard-shortcuts)
 - [Prispievanie](#prispievanie)
 - [Kontakt](#kontakt)
 - [Licencia](#licencia)
 
-## Inštalácia (macOS)
+## Features
+
+- **WCAG contrast ratio**: pass/fail results for 1.4.3 Contrast (Minimum), 1.4.6 Contrast (Enhanced) and 1.4.11 Non-text Contrast, for regular and large text.
+- **Screen colour picker**: a magnifier to pick any pixel on screen, with adjustable zoom, pixel-precise keyboard moves and a *continue mode* to pick both colours in a row.
+- **Colour formats**: Hex, RGB, HSL, HSV, Lab, OKLCH and OKLab. Type a value or adjust each channel with a slider. Choose the displayed formats in Settings.
+- **Alpha channel**: a transparent foreground is blended over the background before the contrast is measured.
+- **Colour names**: the CSS colour name is shown when a colour exactly matches a named colour.
+- **Copy templates**: copy the results to the clipboard in your own format, each template with its own shortcut.
+- **Global picker shortcuts**: start the picker even when Luma11y is not focused.
+- **Appearance**: Modern or Classic style, automatic/light/dark theme, window zoom, “Always on top”.
+- **Colour profiles (macOS)**: switch the display ICC profile from the menu bar.
+- **Restore last colours** on startup (optional).
+- **Automatic updates** from the Updates tab in Settings.
+- **Accessible and localised**: keyboard and screen reader friendly, available in English, French and Slovak.
 
 > [!NOTE]
-> Aplikácia zatiaľ nie je podpísaná certifikátom Apple Developer. Budete musieť obísť Gatekeeper pomocou jednej z možností nižšie.
+> On macOS, the picker needs the “Screen & System Audio Recording” permission to read pixels on screen. The app asks for it at first launch.
 
-### Možnosť 1 &mdash; Vypnúť Gatekeeper (odporúčané)
+## Keyboard shortcuts
 
-1. Stiahnite si najnovšiu verziu zo stránky [Releases](https://github.com/WebAccessibilityTools/Luma11y/releases).
-2. Presuňte rozbalený súbor `Luma11y.app` do priečinka **Aplikácie**. **Ešte naň dvakrát neklikajte.**
-3. Otvorte **Terminál** a spustite:
-   ```shell
-   sudo spctl --master-disable
-   ```
-4. Prejdite do **Nastavenia systému** > **Súkromie a bezpečnosť** > **Bezpečnosť** a zvoľte **Kdekoľvek**.
-5. Dvojklikom spustite `Luma11y.app`. Ak sa zobrazí výzva, potvrďte ju.
+On macOS, <kbd>Cmd</kbd> replaces <kbd>Ctrl</kbd>.
 
-### Možnosť 2 &mdash; Bez vypnutia Gatekeeper
+### Main window
 
-1. Stiahnite si najnovšiu verziu zo stránky [Releases](https://github.com/WebAccessibilityTools/Luma11y/releases).
-2. Povoľte **Nastavenia systému** > **Súkromie a bezpečnosť** > **Bezpečnosť** > **App Store a overení vývojári**.
-3. Dvojklikom spustite `Luma11y.app`. Bude zablokovaná.
-4. Prejdite do **Nastavenia systému** > **Súkromie a bezpečnosť** > **Bezpečnosť** a kliknite na **Otvoriť napriek tomu**.
-5. Ak sa zobrazí výzva, povoľte spustenie aplikácie.
+| Shortcut | Action |
+| --- | --- |
+| <kbd>F11</kbd> | Pick the foreground colour (global, customisable) |
+| <kbd>F12</kbd> | Pick the background colour (global, customisable) |
+| <kbd>Ctrl</kbd>+<kbd>S</kbd> | Copy the results with the default template (customisable) |
+| <kbd>Ctrl</kbd>+<kbd>,</kbd> | Open Settings |
+| <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>-</kbd> | Zoom in / out the window |
+| <kbd>Ctrl</kbd>+<kbd>0</kbd> | Reset the window zoom |
+| <kbd>Shift</kbd>+arrows | On a channel slider: change the value by 10 instead of 1 |
+| <kbd>Esc</kbd> | Close the Settings window, or an open menu |
 
-### Možnosť 3 &mdash; Odstrániť karanténu iba pre Luma11y
+### Colour picker
 
-1. Stiahnite si najnovšiu verziu zo stránky [Releases](https://github.com/WebAccessibilityTools/Luma11y/releases).
-2. Presuňte rozbalený súbor `Luma11y.app` do priečinka **Aplikácie**. **Ešte naň dvakrát neklikajte.**
-3. Otvorte **Terminál** a spustite:
-   ```shell
-   sudo xattr -cr ~/Applications/Luma11y.app
-   ```
+| Shortcut | Action |
+| --- | --- |
+| Arrows | Move by 1 pixel |
+| <kbd>Shift</kbd>+arrows | Move by 50 pixels |
+| <kbd>Enter</kbd>, <kbd>Space</kbd> or click | Select the colour |
+| <kbd>Esc</kbd> or right click | Cancel |
+| <kbd>C</kbd> | Toggle continue mode (pick foreground and background in a row) |
+| <kbd>I</kbd> / <kbd>O</kbd> or mouse wheel | Zoom in / out |
+| <kbd>Shift</kbd>+<kbd>I</kbd> / <kbd>Shift</kbd>+<kbd>O</kbd> or <kbd>Shift</kbd>+wheel | Capture more / fewer pixels |
+
+Picker and copy shortcuts can be changed in **Settings › Shortcuts** and **Settings › Copy templates**.
 
 ## Prispievanie
 
