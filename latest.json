@@ -1,0 +1,19 @@
+{
+  "version": "9.9.9",
+  "notes": "### 🚀 Features\n\n- Restore always-on-top state on re-open\n- Restore slider display modes on re-open (Closes #56)\n- First linux x11 test\n- First linux x11 test #2\n- Basic auto-update process\n\n### ⚙️ Miscellaneous Tasks\n\n- Drop french comments\n- Cleaning files\n- Release artefacts\n- Release artefacts #2\n- Gather all buttons css declarations into a single file",
+  "pub_date": "2026-09-17T00:00:00Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "x",
+      "url": "http://localhost:8787/fake.tar.gz"
+    },
+    "darwin-x86_64": {
+      "signature": "x",
+      "url": "http://localhost:8787/fake.tar.gz"
+    },
+    "windows-x86_64": {
+      "signature": "x",
+      "url": "http://localhost:8787/fake.exe"
+    }
+  }
+}
