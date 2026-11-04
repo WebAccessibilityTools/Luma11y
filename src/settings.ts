@@ -149,7 +149,10 @@ Alpine.store('settings', {
   // Restore the last colour combination on startup
   restoreColors: localStorage.getItem('luma11y-restore-colors') === 'true',
 
-  // Updates: automatic check at startup + state of the manual check
+  // Updates: automatic check at startup + state of the manual check.
+  // storeBuild: running from the Microsoft Store package, updates are handled
+  // by the Store and the Updates tab is hidden.
+  storeBuild: false,
   autoUpdate: localStorage.getItem('luma11y-auto-update') !== 'false',
   updateState: 'idle' as 'idle' | 'checking' | 'none' | 'available' | 'installing' | 'error',
   update: null as Update | null,
@@ -365,6 +368,7 @@ requestAnimationFrame(() => {
   const store = Alpine.store('settings') as any;
   store.locale = detectedLocale;
   store.preference = getLocalePreference();
+  store.storeBuild = await invoke<boolean>('is_store_build').catch(() => false);
 
   // Listen for locale changes from native menu or other windows
   await listen<string>('locale-changed', (event) => {

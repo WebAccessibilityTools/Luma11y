@@ -662,8 +662,10 @@ async function restoreLastAlwaysOnTop(): Promise<void> {
     // Display error if retrieval fails
     console.error('Error loading ICC profile:', error);
   }
-  // Step 7: automatic update check
-  if (localStorage.getItem('luma11y-auto-update') !== 'false') {
+  // Step 7: automatic update check (not in the Microsoft Store build, where
+  // updates are handled by the Store)
+  const storeBuild = await invoke<boolean>('is_store_build').catch(() => false);
+  if (!storeBuild && localStorage.getItem('luma11y-auto-update') !== 'false') {
     try {
       (Alpine.store('updater') as UpdaterStore).update = await check();
     } catch (err) {

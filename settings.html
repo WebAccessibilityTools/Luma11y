@@ -20,7 +20,8 @@
     </header>
     <main x-data="{
       activeTab: 'general',
-      tabs: ['general', 'shortcuts', 'templates', 'update', 'about'],
+      // No Updates tab in the Microsoft Store build: the Store handles updates
+      get tabs() { return ['general', 'shortcuts', 'templates', 'update', 'about'].filter(t => t !== 'update' || !this.$store.settings.storeBuild); },
       focusTab(id) { this.$root.querySelector(`[role=tab][data-tab=${id}]`)?.focus(); },
       prevTab() { const i = this.tabs.indexOf(this.activeTab); this.activeTab = this.tabs[(i - 1 + this.tabs.length) % this.tabs.length]; this.$nextTick(() => this.focusTab(this.activeTab)); },
       nextTab() { const i = this.tabs.indexOf(this.activeTab); this.activeTab = this.tabs[(i + 1) % this.tabs.length]; this.$nextTick(() => this.focusTab(this.activeTab)); }
@@ -58,6 +59,7 @@
           x-text="$store.settings.t('settings.tab_templates')">Copy templates</button>
         <button role="tab" data-tab="update"
           id="tab-update" aria-controls="panel-update"
+          x-show="!$store.settings.storeBuild"
           :aria-selected="activeTab === 'update'"
           :tabindex="activeTab === 'update' ? 0 : -1"
           :class="{ active: activeTab === 'update' }"
